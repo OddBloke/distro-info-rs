@@ -60,6 +60,12 @@ impl UbuntuDistroInfo {
                                                                 field))?)
                 .ok())
         };
+        let parse_server_eol = |field: &Option<&str>| -> Result<Option<NaiveDate>, Error> {
+            match field {
+                &Some(field) => parse_date(&Some(field)),
+                &None => Ok(None),
+            }
+        };
 
         for record in rdr.records() {
             let record = record?;
@@ -70,7 +76,7 @@ impl UbuntuDistroInfo {
                                          parse_date(&record.get(3))?,
                                          parse_date(&record.get(4))?,
                                          parse_date(&record.get(5))?,
-                                         None));
+                                         parse_server_eol(&record.get(6))?))
         }
         Ok(distro_info)
     }
