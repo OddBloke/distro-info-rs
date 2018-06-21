@@ -1,6 +1,13 @@
 extern crate chrono;
+extern crate csv;
+#[macro_use]
+extern crate failure;
 
 use chrono::naive::NaiveDate;
+use csv::ReaderBuilder;
+use failure::Error;
+
+const UBUNTU_CSV_PATH: &str = "/usr/share/distro-info/ubuntu.csv";
 
 pub struct DistroRelease {
     pub version: String,
@@ -30,6 +37,31 @@ impl DistroRelease {
             eol: eol,
             eol_server: eol_server,
         }
+    }
+}
+
+struct UbuntuDistroInfo {
+    _releases: Vec<DistroRelease>,
+}
+
+impl UbuntuDistroInfo {
+    pub fn new() -> Result<UbuntuDistroInfo, Error> {
+        let mut distro_info = UbuntuDistroInfo { _releases: vec![] };
+        let mut rdr = ReaderBuilder::new().flexible(true)
+            .from_path(UBUNTU_CSV_PATH)?;
+
+        for record in rdr.records() {
+            let record = record?;
+            distro_info._releases
+                .push(DistroRelease::new(record.get(0).ok_or(format_err!("fail"))?.to_string(),
+                                         record.get(1).ok_or(format_err!("fail"))?.to_string(),
+                                         record.get(2).ok_or(format_err!("fail"))?.to_string(),
+                                         NaiveDate::parse_from_str("%Y-%m-%d", record.get(3).ok_or(format_err!("fail"))?).ok(),
+                                         NaiveDate::parse_from_str("%Y-%m-%d", record.get(4).ok_or(format_err!("fail"))?).ok(),
+                                         NaiveDate::parse_from_str("%Y-%m-%d", record.get(5).ok_or(format_err!("fail"))?).ok(),
+                                         None));
+        }
+        Ok(distro_info)
     }
 }
 
