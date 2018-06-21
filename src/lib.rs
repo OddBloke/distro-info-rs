@@ -40,7 +40,7 @@ impl DistroRelease {
     }
 }
 
-struct UbuntuDistroInfo {
+pub struct UbuntuDistroInfo {
     _releases: Vec<DistroRelease>,
 }
 
@@ -50,15 +50,26 @@ impl UbuntuDistroInfo {
         let mut rdr = ReaderBuilder::new().flexible(true)
             .from_path(UBUNTU_CSV_PATH)?;
 
+        let parse_required_str = |field: &Option<&str>| -> Result<String, Error> {
+            Ok(field.ok_or(format_err!("failed to read required option"))?.to_string())
+        };
+        let parse_date = |field: &Option<&str>| -> Result<Option<NaiveDate>, Error> {
+            Ok(NaiveDate::parse_from_str("%Y-%m-%d",
+                                         field.ok_or(format_err!("failed to parse date from: \
+                                                                 {:?}",
+                                                                field))?)
+                .ok())
+        };
+
         for record in rdr.records() {
             let record = record?;
             distro_info._releases
-                .push(DistroRelease::new(record.get(0).ok_or(format_err!("fail"))?.to_string(),
-                                         record.get(1).ok_or(format_err!("fail"))?.to_string(),
-                                         record.get(2).ok_or(format_err!("fail"))?.to_string(),
-                                         NaiveDate::parse_from_str("%Y-%m-%d", record.get(3).ok_or(format_err!("fail"))?).ok(),
-                                         NaiveDate::parse_from_str("%Y-%m-%d", record.get(4).ok_or(format_err!("fail"))?).ok(),
-                                         NaiveDate::parse_from_str("%Y-%m-%d", record.get(5).ok_or(format_err!("fail"))?).ok(),
+                .push(DistroRelease::new(parse_required_str(&record.get(0))?,
+                                         parse_required_str(&record.get(1))?,
+                                         parse_required_str(&record.get(2))?,
+                                         parse_date(&record.get(3))?,
+                                         parse_date(&record.get(4))?,
+                                         parse_date(&record.get(5))?,
                                          None));
         }
         Ok(distro_info)
@@ -69,6 +80,7 @@ impl UbuntuDistroInfo {
 mod tests {
     use chrono::naive::NaiveDate;
     use DistroRelease;
+    use UbuntuDistroInfo;
 
     #[test]
     fn create_struct() {
@@ -108,5 +120,11 @@ mod tests {
         assert_eq!(Some(get_date(1)), distro_release.release);
         assert_eq!(Some(get_date(2)), distro_release.eol);
         assert_eq!(Some(get_date(3)), distro_release.eol_server);
+    }
+
+    #[test]
+    fn ubuntu_distro_info_new() {
+        UbuntuDistroInfo::new().unwrap();
+        ()
     }
 }
