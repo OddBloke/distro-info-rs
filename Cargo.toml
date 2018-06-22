@@ -1,7 +1,10 @@
 [package]
 name = "distro-info"
+description = "Library for parsing Debian/Ubuntu distro-info-data"
 version = "0.1.0"
-authors = ["Daniel Watkins <oddbloke@ubuntu.com>"]
+authors = ["Daniel Watkins <daniel@daniel-watkins.co.uk>"]
+license = "GPL-3.0"
+homepage = "https://github.com/OddBloke/distro-info-rs/tree/master"
 
 [dependencies]
 chrono = "0.4"
