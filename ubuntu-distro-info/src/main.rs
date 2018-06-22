@@ -1,12 +1,14 @@
 extern crate chrono;
 extern crate clap;
 extern crate distro_info;
+extern crate failure;
 
 use chrono::Datelike;
 use chrono::Utc;
 use chrono::naive::NaiveDate;
 use clap::{Arg, ArgGroup, App};
 use distro_info::UbuntuDistroInfo;
+use failure::Error;
 
 fn all() {
     let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
@@ -24,7 +26,7 @@ fn supported() {
     }
 }
 
-fn main() {
+fn run() -> Result<(), Error> {
     let matches = App::new("ubuntu-distro-info")
         .version("0.1.2")
         .author("Daniel Watkins <daniel@daniel-watkins.co.uk>")
@@ -36,5 +38,15 @@ fn main() {
         all();
     } else if matches.is_present("supported") {
         supported();
+    }
+    Ok(())
+}
+
+fn main() {
+    if let Err(ref e) = run() {
+        use std::io::Write;
+        let stderr = &mut ::std::io::stderr();
+        writeln!(stderr, "error: {:?}", e).unwrap();
+        ::std::process::exit(1);
     }
 }
