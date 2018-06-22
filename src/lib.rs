@@ -1,3 +1,8 @@
+//! Parse Debian and Ubuntu distro-info-data files and provide them as easy-to-consume Rust data
+//! structures.
+//!
+//! Use [``UbuntuDistroInfo``](struct.UbuntuDistroInfo.html) to access the Ubuntu data.  (The
+//! Debian implementation has yet to happen.)
 extern crate chrono;
 extern crate csv;
 #[macro_use]
@@ -44,7 +49,10 @@ pub struct UbuntuDistroInfo {
     _releases: Vec<DistroRelease>,
 }
 
+/// A struct capturing the Ubuntu releases stored in `/usr/share/distro-info/ubuntu.csv`
 impl UbuntuDistroInfo {
+    /// Open `/usr/share/distro-info/ubuntu.csv` and parse the Ubuntu release data contained
+    /// therein
     pub fn new() -> Result<UbuntuDistroInfo, Error> {
         let mut distro_info = UbuntuDistroInfo { _releases: vec![] };
         let mut rdr = ReaderBuilder::new().flexible(true)
@@ -80,6 +88,8 @@ impl UbuntuDistroInfo {
         Ok(distro_info)
     }
 
+    /// Returns a vector of `DistroRelease`s for Ubuntu releases that were released and supported at
+    /// the given date
     pub fn supported<'a>(&'a self, date: NaiveDate) -> Vec<&'a DistroRelease> {
         self._releases
             .iter()
