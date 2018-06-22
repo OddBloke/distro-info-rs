@@ -93,6 +93,10 @@ impl UbuntuDistroInfo {
             })
             .collect()
     }
+
+    pub fn iter(&self) -> ::std::slice::Iter<DistroRelease> {
+        self._releases.iter()
+    }
 }
 
 impl IntoIterator for UbuntuDistroInfo {
@@ -195,6 +199,26 @@ mod tests {
                         "artful".to_string(),
                         "bionic".to_string()],
                    supported_series);
+    }
+
+    #[test]
+    fn ubuntu_distro_info_iter() {
+        let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
+        let iter_suites: Vec<String> =
+            ubuntu_distro_info.iter().map(|distro_release| distro_release.series.clone()).collect();
+        let mut for_loop_suites = vec![];
+        for distro_release in ubuntu_distro_info {
+            for_loop_suites.push(distro_release.series.clone());
+        }
+        assert_eq!(for_loop_suites, iter_suites);
+    }
+
+    #[test]
+    fn ubuntu_distro_info_iters_are_separate() {
+        let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
+        let mut iter1 = ubuntu_distro_info.iter();
+        let mut iter2 = ubuntu_distro_info.iter();
+        assert_eq!(iter1.next().unwrap().series, iter2.next().unwrap().series);
     }
 
 }
