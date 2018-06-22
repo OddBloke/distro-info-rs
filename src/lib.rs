@@ -54,11 +54,10 @@ impl UbuntuDistroInfo {
             Ok(field.ok_or(format_err!("failed to read required option"))?.to_string())
         };
         let parse_date = |field: &Option<&str>| -> Result<Option<NaiveDate>, Error> {
-            Ok(NaiveDate::parse_from_str("%Y-%m-%d",
-                                         field.ok_or(format_err!("failed to parse date from: \
-                                                                 {:?}",
-                                                                field))?)
-                .ok())
+            match field {
+                &Some(field) => Ok(Some(NaiveDate::parse_from_str(field, "%Y-%m-%d")?)),
+                &None => Err(format_err!("unexpected error from: {:?}", field)),
+            }
         };
         let parse_server_eol = |field: &Option<&str>| -> Result<Option<NaiveDate>, Error> {
             match field {
