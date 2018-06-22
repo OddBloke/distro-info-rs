@@ -155,4 +155,16 @@ mod tests {
         assert_eq!(Some(NaiveDate::from_ymd(2006, 4, 30)), distro_release.eol);
         assert_eq!(None, distro_release.eol_server);
     }
+
+    #[test]
+    fn ubuntu_distro_info_eol_server() {
+        let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
+        for distro_release in ubuntu_distro_info {
+            if distro_release.series == "dapper" {
+                assert_eq!(Some(NaiveDate::from_ymd(2011, 6, 1)),
+                           distro_release.eol_server);
+                break;
+            }
+        }
+    }
 }
