@@ -81,6 +81,15 @@ impl UbuntuDistroInfo {
     }
 }
 
+impl IntoIterator for UbuntuDistroInfo {
+    type Item = DistroRelease;
+    type IntoIter = ::std::vec::IntoIter<DistroRelease>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self._releases.into_iter()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use chrono::naive::NaiveDate;
@@ -131,5 +140,19 @@ mod tests {
     fn ubuntu_distro_info_new() {
         UbuntuDistroInfo::new().unwrap();
         ()
+    }
+
+    #[test]
+    fn ubuntu_distro_info_item() {
+        let distro_release = UbuntuDistroInfo::new().unwrap().into_iter().next().unwrap();
+        assert_eq!("4.10", distro_release.version);
+        assert_eq!("Warty Warthog", distro_release.codename);
+        assert_eq!("warty", distro_release.series);
+        assert_eq!(Some(NaiveDate::from_ymd(2004, 3, 5)),
+                   distro_release.created);
+        assert_eq!(Some(NaiveDate::from_ymd(2004, 10, 20)),
+                   distro_release.release);
+        assert_eq!(Some(NaiveDate::from_ymd(2006, 4, 30)), distro_release.eol);
+        assert_eq!(None, distro_release.eol_server);
     }
 }
