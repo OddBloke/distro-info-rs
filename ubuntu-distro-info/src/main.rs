@@ -13,6 +13,7 @@ use failure::{Error, ResultExt};
 
 enum DaysMode {
     Created,
+    Eol,
     Release,
 }
 
@@ -47,6 +48,10 @@ fn output(
         let target_date = match days_mode {
             Some(DaysMode::Created) => Some(distro_release.created.ok_or(format_err!(
                 "No creation date found for {}",
+                &distro_release.series
+            ))?),
+            Some(DaysMode::Eol) => Some(distro_release.eol.ok_or(format_err!(
+                "No EOL date found for {}",
                 &distro_release.series
             ))?),
             Some(DaysMode::Release) => Some(distro_release.release.ok_or(format_err!(
@@ -90,7 +95,7 @@ fn run() -> Result<(), Error> {
                 .long("days")
                 .takes_value(true)
                 .default_value("release")
-                .possible_values(&["created", "release"]),
+                .possible_values(&["created", "eol", "release"]),
         )
         .group(
             ArgGroup::with_name("selector")
@@ -158,6 +163,7 @@ fn run() -> Result<(), Error> {
     } else {
         matches.value_of("days").map(|value| match value {
             "created" => DaysMode::Created,
+            "eol" => DaysMode::Eol,
             "release" => DaysMode::Release,
             _ => panic!("unknown days mode found; please report a bug"),
         })
