@@ -40,13 +40,14 @@ fn run() -> Result<(), Error> {
         .arg(Arg::with_name("devel").short("d").long("devel"))
         .arg(Arg::with_name("latest").short("l").long("latest"))
         .arg(Arg::with_name("lts").long("lts"))
+        .arg(Arg::with_name("stable").short("s").long("stable"))
         .arg(Arg::with_name("supported").long("supported"))
         .arg(Arg::with_name("codename").short("c").long("codename"))
         .arg(Arg::with_name("fullname").short("f").long("fullname"))
         .arg(Arg::with_name("release").short("r").long("release"))
         .arg(Arg::with_name("date").long("date").takes_value(true))
         .group(ArgGroup::with_name("selector")
-            .args(&["all", "devel", "latest", "lts", "supported"])
+            .args(&["all", "devel", "latest", "lts", "stable", "supported"])
             .required(true))
         .group(ArgGroup::with_name("output").args(&["codename", "fullname", "release"]))
         .get_matches();
@@ -73,6 +74,8 @@ fn run() -> Result<(), Error> {
             }
         }
         vec![lts_releases.last().unwrap().clone()]
+    } else if matches.is_present("stable") {
+        vec![ubuntu_distro_info.supported(date).last().unwrap().clone()]
     } else {
         panic!("clap prevent us from reaching here; report a bug if you see this")
     };
