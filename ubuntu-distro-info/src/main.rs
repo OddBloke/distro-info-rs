@@ -11,23 +11,52 @@ use clap::{App, Arg, ArgGroup};
 use distro_info::{DistroRelease, UbuntuDistroInfo};
 use failure::{Error, ResultExt};
 
+enum DaysMode {
+    Release,
+}
+
 enum OutputMode {
     Codename,
     FullName,
     Release,
+    Suppress,
 }
 
-fn output(distro_releases: Vec<&DistroRelease>, output_mode: OutputMode) {
+fn determine_day_delta(date: &NaiveDate) -> i64 {
+    date.signed_duration_since(today()).num_days()
+}
+
+fn output(
+    distro_releases: Vec<&DistroRelease>,
+    output_mode: OutputMode,
+    days_mode: Option<DaysMode>,
+) -> Result<(), Error> {
     for distro_release in distro_releases {
+        let mut output_parts = vec![];
         match output_mode {
-            OutputMode::Codename => println!("{}", &distro_release.series),
-            OutputMode::Release => println!("{}", &distro_release.version),
-            OutputMode::FullName => println!(
+            OutputMode::Codename => output_parts.push(format!("{}", &distro_release.series)),
+            OutputMode::Release => output_parts.push(format!("{}", &distro_release.version)),
+            OutputMode::FullName => output_parts.push(format!(
                 "Ubuntu {} \"{}\"",
                 &distro_release.version, &distro_release.codename
-            ),
+            )),
+            OutputMode::Suppress => (),
+        }
+        match days_mode {
+            Some(DaysMode::Release) => output_parts.push(format!(
+                "{}",
+                determine_day_delta(&distro_release.release.ok_or(format_err!(
+                    "No release date found for {}",
+                    &distro_release.series
+                ))?)
+            )),
+            None => (),
+        }
+        if !output_parts.is_empty() {
+            println!("{}", output_parts.join(" "));
         }
     }
+    Ok(())
 }
 
 fn today() -> NaiveDate {
@@ -50,6 +79,13 @@ fn run() -> Result<(), Error> {
         .arg(Arg::with_name("fullname").short("f").long("fullname"))
         .arg(Arg::with_name("release").short("r").long("release"))
         .arg(Arg::with_name("date").long("date").takes_value(true))
+        .arg(
+            Arg::with_name("days")
+                .long("days")
+                .takes_value(true)
+                .default_value("release")
+                .possible_values(&["release"]),
+        )
         .group(
             ArgGroup::with_name("selector")
                 .args(&[
@@ -111,12 +147,23 @@ fn run() -> Result<(), Error> {
     } else {
         panic!("clap prevent us from reaching here; report a bug if you see this")
     };
-    if matches.is_present("fullname") {
-        output(distro_releases_iter, OutputMode::FullName);
-    } else if matches.is_present("release") {
-        output(distro_releases_iter, OutputMode::Release);
+    let days_mode = if matches.occurrences_of("days") == 0 {
+        None
     } else {
-        output(distro_releases_iter, OutputMode::Codename);
+        matches.value_of("days").map(|value| match value {
+            "release" => DaysMode::Release,
+            _ => panic!("unknown days mode found; please report a bug"),
+        })
+    };
+    if matches.is_present("fullname") {
+        output(distro_releases_iter, OutputMode::FullName, days_mode)?;
+    } else if matches.is_present("release") {
+        output(distro_releases_iter, OutputMode::Release, days_mode)?;
+    } else if matches.is_present("codename") || days_mode.is_none() {
+        // This should be the default output _unless_ --days is specified
+        output(distro_releases_iter, OutputMode::Codename, days_mode)?;
+    } else {
+        output(distro_releases_iter, OutputMode::Suppress, days_mode)?;
     }
     Ok(())
 }
