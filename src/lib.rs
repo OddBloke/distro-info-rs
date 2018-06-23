@@ -124,14 +124,10 @@ impl UbuntuDistroInfo {
     /// Returns a vector of `DistroRelease`s for Ubuntu releases that were in development at the
     /// given date
     pub fn devel<'a>(&'a self, date: NaiveDate) -> Vec<&'a DistroRelease> {
-        self._releases
-            .iter()
+        self.all_at(date)
+            .into_iter()
             .filter(|distro_release| match distro_release.release {
                 Some(release) => date < release,
-                None => false,
-            })
-            .filter(|distro_release| match distro_release.created {
-                Some(created) => date >= created,
                 None => false,
             })
             .collect()
