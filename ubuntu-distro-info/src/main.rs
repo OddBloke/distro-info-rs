@@ -39,13 +39,14 @@ fn run() -> Result<(), Error> {
         .arg(Arg::with_name("all").short("a").long("all"))
         .arg(Arg::with_name("devel").short("d").long("devel"))
         .arg(Arg::with_name("latest").short("l").long("latest"))
+        .arg(Arg::with_name("lts").long("lts"))
         .arg(Arg::with_name("supported").long("supported"))
         .arg(Arg::with_name("codename").short("c").long("codename"))
         .arg(Arg::with_name("fullname").short("f").long("fullname"))
         .arg(Arg::with_name("release").short("r").long("release"))
         .arg(Arg::with_name("date").long("date").takes_value(true))
         .group(ArgGroup::with_name("selector")
-            .args(&["all", "devel", "latest", "supported"])
+            .args(&["all", "devel", "latest", "lts", "supported"])
             .required(true))
         .group(ArgGroup::with_name("output").args(&["codename", "fullname", "release"]))
         .get_matches();
@@ -64,6 +65,14 @@ fn run() -> Result<(), Error> {
         ubuntu_distro_info.devel(date)
     } else if matches.is_present("latest") {
         vec![ubuntu_distro_info.latest(date)]
+    } else if matches.is_present("lts") {
+        let mut lts_releases = vec![];
+        for distro_release in ubuntu_distro_info.all_at(date) {
+            if distro_release.is_lts() {
+                lts_releases.push(distro_release);
+            }
+        }
+        vec![lts_releases.last().unwrap().clone()]
     } else {
         panic!("clap prevent us from reaching here; report a bug if you see this")
     };
