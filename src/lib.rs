@@ -104,6 +104,22 @@ impl UbuntuDistroInfo {
             .collect()
     }
 
+    /// Returns a vector of `DistroRelease`s for Ubuntu releases that were in development at the
+    /// given date
+    pub fn devel<'a>(&'a self, date: NaiveDate) -> Vec<&'a DistroRelease> {
+        self._releases
+            .iter()
+            .filter(|distro_release| match distro_release.release {
+                Some(release) => date < release,
+                None => false,
+            })
+            .filter(|distro_release| match distro_release.created {
+                Some(created) => date > created,
+                None => false,
+            })
+            .collect()
+    }
+
     pub fn iter(&self) -> ::std::slice::Iter<DistroRelease> {
         self._releases.iter()
     }
@@ -209,6 +225,17 @@ mod tests {
                         "artful".to_string(),
                         "bionic".to_string()],
                    supported_series);
+    }
+
+    #[test]
+    fn ubuntu_distro_info_devel() {
+        let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
+        let date = NaiveDate::from_ymd(2018, 6, 14);
+        let devel_series: Vec<String> = ubuntu_distro_info.devel(date)
+            .iter()
+            .map(|distro_release| distro_release.series.clone())
+            .collect();
+        assert_eq!(vec!["cosmic".to_string()], devel_series);
     }
 
     #[test]
