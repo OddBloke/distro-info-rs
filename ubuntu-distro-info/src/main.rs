@@ -1,6 +1,7 @@
 extern crate chrono;
 extern crate clap;
 extern crate distro_info;
+#[macro_use]
 extern crate failure;
 
 use chrono::Datelike;
@@ -43,6 +44,7 @@ fn run() -> Result<(), Error> {
         .arg(Arg::with_name("devel").short("d").long("devel"))
         .arg(Arg::with_name("latest").short("l").long("latest"))
         .arg(Arg::with_name("lts").long("lts"))
+        .arg(Arg::with_name("series").long("series").takes_value(true))
         .arg(Arg::with_name("stable").short("s").long("stable"))
         .arg(Arg::with_name("supported").long("supported"))
         .arg(Arg::with_name("codename").short("c").long("codename"))
@@ -50,7 +52,7 @@ fn run() -> Result<(), Error> {
         .arg(Arg::with_name("release").short("r").long("release"))
         .arg(Arg::with_name("date").long("date").takes_value(true))
         .group(ArgGroup::with_name("selector")
-            .args(&["all", "devel", "latest", "lts", "stable", "supported"])
+            .args(&["all", "devel", "latest", "lts", "series", "stable", "supported"])
             .required(true))
         .group(ArgGroup::with_name("output").args(&["codename", "fullname", "release"]))
         .get_matches();
@@ -79,6 +81,22 @@ fn run() -> Result<(), Error> {
         vec![lts_releases.last().unwrap().clone()]
     } else if matches.is_present("stable") {
         vec![ubuntu_distro_info.supported(date).last().unwrap().clone()]
+    } else if matches.is_present("series") {
+        match matches.value_of("series") {
+            Some(needle_series) => {
+                let candidates: Vec<&DistroRelease> = ubuntu_distro_info.iter()
+                    .filter(|distro_release| distro_release.series == needle_series)
+                    .collect();
+                if candidates.len() == 0 {
+                    bail!("unknown distribution series `{}'", needle_series);
+                };
+                Ok(candidates)
+            }
+            None => {
+                Err(format_err!("--series requires an argument; please report a bug about this \
+                                 error"))
+            }
+        }?
     } else {
         panic!("clap prevent us from reaching here; report a bug if you see this")
     };
