@@ -14,6 +14,7 @@ use failure::{Error, ResultExt};
 enum DaysMode {
     Created,
     Eol,
+    EolServer,
     Release,
 }
 
@@ -54,15 +55,22 @@ fn output(
                 "No EOL date found for {}",
                 &distro_release.series
             ))?),
+            Some(DaysMode::EolServer) => distro_release.eol_server,
             Some(DaysMode::Release) => Some(distro_release.release.ok_or(format_err!(
                 "No release date found for {}",
                 &distro_release.series
             ))?),
             None => None,
         };
-        target_date.map(|target_date| {
-            output_parts.push(format!("{}", determine_day_delta(date, &target_date)))
-        });
+        match target_date {
+            Some(target_date) => {
+                output_parts.push(format!("{}", determine_day_delta(date, &target_date)));
+            }
+            None => match days_mode {
+                Some(DaysMode::EolServer) => output_parts.push("(unknown)".to_string()),
+                _ => (),
+            },
+        };
         if !output_parts.is_empty() {
             println!("{}", output_parts.join(" "));
         }
@@ -95,7 +103,7 @@ fn run() -> Result<(), Error> {
                 .long("days")
                 .takes_value(true)
                 .default_value("release")
-                .possible_values(&["created", "eol", "release"]),
+                .possible_values(&["created", "eol", "eol-server", "release"]),
         )
         .group(
             ArgGroup::with_name("selector")
@@ -164,6 +172,7 @@ fn run() -> Result<(), Error> {
         matches.value_of("days").map(|value| match value {
             "created" => DaysMode::Created,
             "eol" => DaysMode::Eol,
+            "eol-server" => DaysMode::EolServer,
             "release" => DaysMode::Release,
             _ => panic!("unknown days mode found; please report a bug"),
         })
