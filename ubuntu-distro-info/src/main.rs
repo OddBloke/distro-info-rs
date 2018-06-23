@@ -10,16 +10,6 @@ use clap::{Arg, ArgGroup, App};
 use distro_info::{DistroRelease, UbuntuDistroInfo};
 use failure::{Error, ResultExt};
 
-fn all<'a>(ubuntu_distro_info: &'a UbuntuDistroInfo, when: NaiveDate) -> Vec<&'a DistroRelease> {
-    ubuntu_distro_info.iter().collect()
-}
-
-fn supported<'a>(ubuntu_distro_info: &'a UbuntuDistroInfo,
-                 when: NaiveDate)
-                 -> Vec<&'a DistroRelease> {
-    ubuntu_distro_info.supported(when)
-}
-
 enum OutputMode {
     Codename,
     FullName,
@@ -63,9 +53,9 @@ fn run() -> Result<(), Error> {
         None => today(),
     };
     let distro_releases_iter = if matches.is_present("all") {
-        all(&ubuntu_distro_info, date)
+        ubuntu_distro_info.iter().collect()
     } else if matches.is_present("supported") {
-        supported(&ubuntu_distro_info, date)
+        ubuntu_distro_info.supported(date)
     } else {
         panic!("clap prevent us from reaching here; report a bug if you see this")
     };
