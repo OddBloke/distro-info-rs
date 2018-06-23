@@ -18,12 +18,15 @@ enum OutputMode {
 
 fn output(distro_releases: Vec<&DistroRelease>, output_mode: OutputMode) {
     for distro_release in distro_releases {
-        println!("{}",
-                 match output_mode {
-                     OutputMode::Codename => &distro_release.series,
-                     OutputMode::FullName => &distro_release.codename,
-                     OutputMode::Release => &distro_release.version,
-                 });
+        match output_mode {
+            OutputMode::Codename => println!("{}", &distro_release.series),
+            OutputMode::Release => println!("{}", &distro_release.version),
+            OutputMode::FullName => {
+                println!("Ubuntu {} \"{}\"",
+                         &distro_release.version,
+                         &distro_release.codename)
+            }
+        }
     }
 }
 
