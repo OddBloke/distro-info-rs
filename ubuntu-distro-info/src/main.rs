@@ -114,7 +114,7 @@ fn main() {
     if let Err(ref e) = run() {
         use std::io::Write;
         let stderr = &mut ::std::io::stderr();
-        writeln!(stderr, "error: {:?}", e).unwrap();
+        writeln!(stderr, "ubuntu-distro-info: {}", e).unwrap();
         ::std::process::exit(1);
     }
 }
