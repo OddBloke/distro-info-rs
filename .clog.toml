@@ -1,0 +1,4 @@
+[clog]
+
+[components]
+ubuntu-distro-info = ["udi"]
