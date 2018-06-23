@@ -44,29 +44,20 @@ fn output(
             )),
             OutputMode::Suppress => (),
         }
-        match days_mode {
-            Some(DaysMode::Created) => output_parts.push(format!(
-                "{}",
-                determine_day_delta(
-                    date,
-                    &distro_release.created.ok_or(format_err!(
-                        "No creation date found for {}",
-                        &distro_release.series
-                    ))?
-                )
-            )),
-            Some(DaysMode::Release) => output_parts.push(format!(
-                "{}",
-                determine_day_delta(
-                    date,
-                    &distro_release.release.ok_or(format_err!(
-                        "No release date found for {}",
-                        &distro_release.series
-                    ))?
-                )
-            )),
-            None => (),
-        }
+        let target_date = match days_mode {
+            Some(DaysMode::Created) => Some(distro_release.created.ok_or(format_err!(
+                "No creation date found for {}",
+                &distro_release.series
+            ))?),
+            Some(DaysMode::Release) => Some(distro_release.release.ok_or(format_err!(
+                "No release date found for {}",
+                &distro_release.series
+            ))?),
+            None => None,
+        };
+        target_date.map(|target_date| {
+            output_parts.push(format!("{}", determine_day_delta(date, &target_date)))
+        });
         if !output_parts.is_empty() {
             println!("{}", output_parts.join(" "));
         }
