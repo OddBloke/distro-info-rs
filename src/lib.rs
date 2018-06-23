@@ -98,7 +98,12 @@ impl UbuntuDistroInfo {
         self._releases
             .iter()
             .filter(|distro_release| match distro_release.eol {
-                Some(eol) => date < eol,
+                Some(eol) => {
+                    match distro_release.eol_server {
+                        Some(eol_server) => date < ::std::cmp::max(eol, eol_server),
+                        None => date < eol,
+                    }
+                }
                 None => false,
             })
             .filter(|distro_release| match distro_release.release {
@@ -269,6 +274,17 @@ mod tests {
                         "artful".to_string(),
                         "bionic".to_string()],
                    supported_series);
+    }
+
+    #[test]
+    fn ubuntu_distro_info_supported_with_server_eol() {
+        let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
+        let date = NaiveDate::from_ymd(2011, 5, 14);
+        let supported_series: Vec<String> = ubuntu_distro_info.supported(date)
+            .iter()
+            .map(|distro_release| distro_release.series.clone())
+            .collect();
+        assert!(supported_series.contains(&"dapper".to_string()));
     }
 
     #[test]
