@@ -25,14 +25,15 @@ pub struct DistroRelease {
 }
 
 impl DistroRelease {
-    pub fn new(version: String,
-               codename: String,
-               series: String,
-               created: Option<NaiveDate>,
-               release: Option<NaiveDate>,
-               eol: Option<NaiveDate>,
-               eol_server: Option<NaiveDate>)
-               -> DistroRelease {
+    pub fn new(
+        version: String,
+        codename: String,
+        series: String,
+        created: Option<NaiveDate>,
+        release: Option<NaiveDate>,
+        eol: Option<NaiveDate>,
+        eol_server: Option<NaiveDate>,
+    ) -> DistroRelease {
         DistroRelease {
             version: version,
             codename: codename,
@@ -59,11 +60,14 @@ impl UbuntuDistroInfo {
     /// therein
     pub fn new() -> Result<UbuntuDistroInfo, Error> {
         let mut distro_info = UbuntuDistroInfo { _releases: vec![] };
-        let mut rdr = ReaderBuilder::new().flexible(true)
+        let mut rdr = ReaderBuilder::new()
+            .flexible(true)
             .from_path(UBUNTU_CSV_PATH)?;
 
         let parse_required_str = |field: &Option<&str>| -> Result<String, Error> {
-            Ok(field.ok_or(format_err!("failed to read required option"))?.to_string())
+            Ok(field
+                .ok_or(format_err!("failed to read required option"))?
+                .to_string())
         };
         let parse_date = |field: &Option<&str>| -> Result<Option<NaiveDate>, Error> {
             match field {
@@ -80,14 +84,15 @@ impl UbuntuDistroInfo {
 
         for record in rdr.records() {
             let record = record?;
-            distro_info._releases
-                .push(DistroRelease::new(parse_required_str(&record.get(0))?,
-                                         parse_required_str(&record.get(1))?,
-                                         parse_required_str(&record.get(2))?,
-                                         parse_date(&record.get(3))?,
-                                         parse_date(&record.get(4))?,
-                                         parse_date(&record.get(5))?,
-                                         parse_server_eol(&record.get(6))?))
+            distro_info._releases.push(DistroRelease::new(
+                parse_required_str(&record.get(0))?,
+                parse_required_str(&record.get(1))?,
+                parse_required_str(&record.get(2))?,
+                parse_date(&record.get(3))?,
+                parse_date(&record.get(4))?,
+                parse_date(&record.get(5))?,
+                parse_server_eol(&record.get(6))?,
+            ))
         }
         Ok(distro_info)
     }
@@ -110,12 +115,10 @@ impl UbuntuDistroInfo {
         self.released(date)
             .into_iter()
             .filter(|distro_release| match distro_release.eol {
-                Some(eol) => {
-                    match distro_release.eol_server {
-                        Some(eol_server) => date <= ::std::cmp::max(eol, eol_server),
-                        None => date <= eol,
-                    }
-                }
+                Some(eol) => match distro_release.eol_server {
+                    Some(eol_server) => date <= ::std::cmp::max(eol, eol_server),
+                    None => date <= eol,
+                },
                 None => false,
             })
             .collect()
@@ -196,13 +199,15 @@ mod tests {
             }
             date
         };
-        let distro_release = DistroRelease::new("version".to_string(),
-                                                "codename".to_string(),
-                                                "series".to_string(),
-                                                Some(get_date(0)),
-                                                Some(get_date(1)),
-                                                Some(get_date(2)),
-                                                Some(get_date(3)));
+        let distro_release = DistroRelease::new(
+            "version".to_string(),
+            "codename".to_string(),
+            "series".to_string(),
+            Some(get_date(0)),
+            Some(get_date(1)),
+            Some(get_date(2)),
+            Some(get_date(3)),
+        );
         assert_eq!("version", distro_release.version);
         assert_eq!("codename", distro_release.codename);
         assert_eq!("series", distro_release.series);
@@ -214,22 +219,26 @@ mod tests {
 
     #[test]
     fn distro_release_is_lts() {
-        let distro_release = DistroRelease::new("98.04 LTS".to_string(),
-                                                "codename".to_string(),
-                                                "series".to_string(),
-                                                Some(NaiveDate::from_ymd(2018, 6, 14)),
-                                                Some(NaiveDate::from_ymd(2018, 6, 14)),
-                                                Some(NaiveDate::from_ymd(2018, 6, 14)),
-                                                Some(NaiveDate::from_ymd(2018, 6, 14)));
+        let distro_release = DistroRelease::new(
+            "98.04 LTS".to_string(),
+            "codename".to_string(),
+            "series".to_string(),
+            Some(NaiveDate::from_ymd(2018, 6, 14)),
+            Some(NaiveDate::from_ymd(2018, 6, 14)),
+            Some(NaiveDate::from_ymd(2018, 6, 14)),
+            Some(NaiveDate::from_ymd(2018, 6, 14)),
+        );
         assert!(distro_release.is_lts());
 
-        let distro_release = DistroRelease::new("98.04".to_string(),
-                                                "codename".to_string(),
-                                                "series".to_string(),
-                                                Some(NaiveDate::from_ymd(2018, 6, 14)),
-                                                Some(NaiveDate::from_ymd(2018, 6, 14)),
-                                                Some(NaiveDate::from_ymd(2018, 6, 14)),
-                                                Some(NaiveDate::from_ymd(2018, 6, 14)));
+        let distro_release = DistroRelease::new(
+            "98.04".to_string(),
+            "codename".to_string(),
+            "series".to_string(),
+            Some(NaiveDate::from_ymd(2018, 6, 14)),
+            Some(NaiveDate::from_ymd(2018, 6, 14)),
+            Some(NaiveDate::from_ymd(2018, 6, 14)),
+            Some(NaiveDate::from_ymd(2018, 6, 14)),
+        );
         assert!(!distro_release.is_lts());
     }
 
@@ -245,10 +254,14 @@ mod tests {
         assert_eq!("4.10", distro_release.version);
         assert_eq!("Warty Warthog", distro_release.codename);
         assert_eq!("warty", distro_release.series);
-        assert_eq!(Some(NaiveDate::from_ymd(2004, 3, 5)),
-                   distro_release.created);
-        assert_eq!(Some(NaiveDate::from_ymd(2004, 10, 20)),
-                   distro_release.release);
+        assert_eq!(
+            Some(NaiveDate::from_ymd(2004, 3, 5)),
+            distro_release.created
+        );
+        assert_eq!(
+            Some(NaiveDate::from_ymd(2004, 10, 20)),
+            distro_release.release
+        );
         assert_eq!(Some(NaiveDate::from_ymd(2006, 4, 30)), distro_release.eol);
         assert_eq!(None, distro_release.eol_server);
     }
@@ -258,8 +271,10 @@ mod tests {
         let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
         for distro_release in ubuntu_distro_info {
             if distro_release.series == "dapper" {
-                assert_eq!(Some(NaiveDate::from_ymd(2011, 6, 1)),
-                           distro_release.eol_server);
+                assert_eq!(
+                    Some(NaiveDate::from_ymd(2011, 6, 1)),
+                    distro_release.eol_server
+                );
                 break;
             }
         }
@@ -269,15 +284,20 @@ mod tests {
         let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
         // Use dapper's release date to confirm we don't have a boundary issue
         let date = NaiveDate::from_ymd(2006, 6, 1);
-        let released_series: Vec<String> = ubuntu_distro_info.released(date)
+        let released_series: Vec<String> = ubuntu_distro_info
+            .released(date)
             .iter()
             .map(|distro_release| distro_release.series.clone())
             .collect();
-        assert_eq!(vec!["warty".to_string(),
-                        "hoary".to_string(),
-                        "breezy".to_string(),
-                        "dapper".to_string()],
-                   released_series);
+        assert_eq!(
+            vec![
+                "warty".to_string(),
+                "hoary".to_string(),
+                "breezy".to_string(),
+                "dapper".to_string(),
+            ],
+            released_series
+        );
     }
 
     #[test]
@@ -285,15 +305,20 @@ mod tests {
         let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
         // Use bionic's release date to confirm we don't have a boundary issue
         let date = NaiveDate::from_ymd(2018, 4, 26);
-        let supported_series: Vec<String> = ubuntu_distro_info.supported(date)
+        let supported_series: Vec<String> = ubuntu_distro_info
+            .supported(date)
             .iter()
             .map(|distro_release| distro_release.series.clone())
             .collect();
-        assert_eq!(vec!["trusty".to_string(),
-                        "xenial".to_string(),
-                        "artful".to_string(),
-                        "bionic".to_string()],
-                   supported_series);
+        assert_eq!(
+            vec![
+                "trusty".to_string(),
+                "xenial".to_string(),
+                "artful".to_string(),
+                "bionic".to_string(),
+            ],
+            supported_series
+        );
     }
 
     #[test]
@@ -301,22 +326,28 @@ mod tests {
         let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
         // Use artful's EOL date to confirm we don't have a boundary issue
         let date = NaiveDate::from_ymd(2018, 7, 19);
-        let supported_series: Vec<String> = ubuntu_distro_info.supported(date)
+        let supported_series: Vec<String> = ubuntu_distro_info
+            .supported(date)
             .iter()
             .map(|distro_release| distro_release.series.clone())
             .collect();
-        assert_eq!(vec!["trusty".to_string(),
-                        "xenial".to_string(),
-                        "artful".to_string(),
-                        "bionic".to_string()],
-                   supported_series);
+        assert_eq!(
+            vec![
+                "trusty".to_string(),
+                "xenial".to_string(),
+                "artful".to_string(),
+                "bionic".to_string(),
+            ],
+            supported_series
+        );
     }
 
     #[test]
     fn ubuntu_distro_info_supported_with_server_eol() {
         let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
         let date = NaiveDate::from_ymd(2011, 5, 14);
-        let supported_series: Vec<String> = ubuntu_distro_info.supported(date)
+        let supported_series: Vec<String> = ubuntu_distro_info
+            .supported(date)
             .iter()
             .map(|distro_release| distro_release.series.clone())
             .collect();
@@ -327,7 +358,8 @@ mod tests {
     fn ubuntu_distro_info_devel() {
         let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
         let date = NaiveDate::from_ymd(2018, 4, 26);
-        let devel_series: Vec<String> = ubuntu_distro_info.devel(date)
+        let devel_series: Vec<String> = ubuntu_distro_info
+            .devel(date)
             .iter()
             .map(|distro_release| distro_release.series.clone())
             .collect();
@@ -338,12 +370,19 @@ mod tests {
     fn ubuntu_distro_info_all_at() {
         let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
         let date = NaiveDate::from_ymd(2005, 4, 8);
-        let all_series: Vec<String> = ubuntu_distro_info.all_at(date)
+        let all_series: Vec<String> = ubuntu_distro_info
+            .all_at(date)
             .iter()
             .map(|distro_release| distro_release.series.clone())
             .collect();
-        assert_eq!(vec!["warty".to_string(), "hoary".to_string(), "breezy".to_string()],
-                   all_series);
+        assert_eq!(
+            vec![
+                "warty".to_string(),
+                "hoary".to_string(),
+                "breezy".to_string(),
+            ],
+            all_series
+        );
     }
 
     #[test]
@@ -357,8 +396,10 @@ mod tests {
     #[test]
     fn ubuntu_distro_info_iter() {
         let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
-        let iter_suites: Vec<String> =
-            ubuntu_distro_info.iter().map(|distro_release| distro_release.series.clone()).collect();
+        let iter_suites: Vec<String> = ubuntu_distro_info
+            .iter()
+            .map(|distro_release| distro_release.series.clone())
+            .collect();
         let mut for_loop_suites = vec![];
         for distro_release in ubuntu_distro_info {
             for_loop_suites.push(distro_release.series.clone());

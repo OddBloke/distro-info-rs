@@ -4,10 +4,10 @@ extern crate distro_info;
 #[macro_use]
 extern crate failure;
 
+use chrono::naive::NaiveDate;
 use chrono::Datelike;
 use chrono::Utc;
-use chrono::naive::NaiveDate;
-use clap::{Arg, ArgGroup, App};
+use clap::{App, Arg, ArgGroup};
 use distro_info::{DistroRelease, UbuntuDistroInfo};
 use failure::{Error, ResultExt};
 
@@ -22,11 +22,10 @@ fn output(distro_releases: Vec<&DistroRelease>, output_mode: OutputMode) {
         match output_mode {
             OutputMode::Codename => println!("{}", &distro_release.series),
             OutputMode::Release => println!("{}", &distro_release.version),
-            OutputMode::FullName => {
-                println!("Ubuntu {} \"{}\"",
-                         &distro_release.version,
-                         &distro_release.codename)
-            }
+            OutputMode::FullName => println!(
+                "Ubuntu {} \"{}\"",
+                &distro_release.version, &distro_release.codename
+            ),
         }
     }
 }
@@ -51,16 +50,27 @@ fn run() -> Result<(), Error> {
         .arg(Arg::with_name("fullname").short("f").long("fullname"))
         .arg(Arg::with_name("release").short("r").long("release"))
         .arg(Arg::with_name("date").long("date").takes_value(true))
-        .group(ArgGroup::with_name("selector")
-            .args(&["all", "devel", "latest", "lts", "series", "stable", "supported"])
-            .required(true))
+        .group(
+            ArgGroup::with_name("selector")
+                .args(&[
+                    "all",
+                    "devel",
+                    "latest",
+                    "lts",
+                    "series",
+                    "stable",
+                    "supported",
+                ])
+                .required(true),
+        )
         .group(ArgGroup::with_name("output").args(&["codename", "fullname", "release"]))
         .get_matches();
     let ubuntu_distro_info = UbuntuDistroInfo::new()?;
     let date = match matches.value_of("date") {
-        Some(date_str) =>
-            NaiveDate::parse_from_str(date_str, "%Y-%m-%d").context(
-                format!("Failed to parse date '{}'; must be YYYY-MM-DD format", date_str))?,
+        Some(date_str) => NaiveDate::parse_from_str(date_str, "%Y-%m-%d").context(format!(
+            "Failed to parse date '{}'; must be YYYY-MM-DD format",
+            date_str
+        ))?,
         None => today(),
     };
     let distro_releases_iter = if matches.is_present("all") {
@@ -84,7 +94,8 @@ fn run() -> Result<(), Error> {
     } else if matches.is_present("series") {
         match matches.value_of("series") {
             Some(needle_series) => {
-                let candidates: Vec<&DistroRelease> = ubuntu_distro_info.iter()
+                let candidates: Vec<&DistroRelease> = ubuntu_distro_info
+                    .iter()
                     .filter(|distro_release| distro_release.series == needle_series)
                     .collect();
                 if candidates.len() == 0 {
@@ -92,10 +103,10 @@ fn run() -> Result<(), Error> {
                 };
                 Ok(candidates)
             }
-            None => {
-                Err(format_err!("--series requires an argument; please report a bug about this \
-                                 error"))
-            }
+            None => Err(format_err!(
+                "--series requires an argument; please report a bug about this \
+                 error"
+            )),
         }?
     } else {
         panic!("clap prevent us from reaching here; report a bug if you see this")
