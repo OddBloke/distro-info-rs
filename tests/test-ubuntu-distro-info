@@ -14,7 +14,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-COMMAND="${0%/*}/ubuntu-distro-info"
+COMMAND="ubuntu-distro-info"
 
 . "${0%/*}/shunit2-helper-functions.sh"
 
