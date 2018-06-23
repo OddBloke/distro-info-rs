@@ -8,7 +8,7 @@ use chrono::Utc;
 use chrono::naive::NaiveDate;
 use clap::{Arg, ArgGroup, App};
 use distro_info::{DistroRelease, UbuntuDistroInfo};
-use failure::Error;
+use failure::{Error, ResultExt};
 
 fn all<'a>(ubuntu_distro_info: &'a UbuntuDistroInfo) -> Vec<&'a DistroRelease> {
     ubuntu_distro_info.iter().collect()
@@ -46,10 +46,17 @@ fn run() -> Result<(), Error> {
         .arg(Arg::with_name("codename").short("c").long("codename"))
         .arg(Arg::with_name("fullname").short("f").long("fullname"))
         .arg(Arg::with_name("release").short("r").long("release"))
+        .arg(Arg::with_name("date").long("date").takes_value(true))
         .group(ArgGroup::with_name("selector").args(&["all", "supported"]).required(true))
         .group(ArgGroup::with_name("output").args(&["codename", "fullname", "release"]))
         .get_matches();
     let ubuntu_distro_info = UbuntuDistroInfo::new()?;
+    let date = match matches.value_of("date") {
+        Some(date_str) => Some(
+            NaiveDate::parse_from_str(date_str, "%Y-%m-%d").context(
+                format!("Failed to parse date '{}'; must be YYYY-MM-DD format", date_str))?),
+        None => None,
+    };
     let distro_releases_iter = if matches.is_present("all") {
         all(&ubuntu_distro_info)
     } else if matches.is_present("supported") {
