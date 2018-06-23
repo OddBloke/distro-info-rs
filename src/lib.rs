@@ -43,6 +43,10 @@ impl DistroRelease {
             eol_server: eol_server,
         }
     }
+
+    pub fn is_lts(&self) -> bool {
+        self.version.contains("LTS")
+    }
 }
 
 pub struct UbuntuDistroInfo {
@@ -197,6 +201,27 @@ mod tests {
         assert_eq!(Some(get_date(1)), distro_release.release);
         assert_eq!(Some(get_date(2)), distro_release.eol);
         assert_eq!(Some(get_date(3)), distro_release.eol_server);
+    }
+
+    #[test]
+    fn distro_release_is_lts() {
+        let distro_release = DistroRelease::new("98.04 LTS".to_string(),
+                                                "codename".to_string(),
+                                                "series".to_string(),
+                                                Some(NaiveDate::from_ymd(2018, 6, 14)),
+                                                Some(NaiveDate::from_ymd(2018, 6, 14)),
+                                                Some(NaiveDate::from_ymd(2018, 6, 14)),
+                                                Some(NaiveDate::from_ymd(2018, 6, 14)));
+        assert!(distro_release.is_lts());
+
+        let distro_release = DistroRelease::new("98.04".to_string(),
+                                                "codename".to_string(),
+                                                "series".to_string(),
+                                                Some(NaiveDate::from_ymd(2018, 6, 14)),
+                                                Some(NaiveDate::from_ymd(2018, 6, 14)),
+                                                Some(NaiveDate::from_ymd(2018, 6, 14)),
+                                                Some(NaiveDate::from_ymd(2018, 6, 14)));
+        assert!(!distro_release.is_lts());
     }
 
     #[test]
