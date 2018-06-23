@@ -120,6 +120,18 @@ impl UbuntuDistroInfo {
             .collect()
     }
 
+    /// Returns a vector of `DistroRelease`s for Ubuntu releases that had been created at the given
+    /// date
+    pub fn all_at<'a>(&'a self, date: NaiveDate) -> Vec<&'a DistroRelease> {
+        self._releases
+            .iter()
+            .filter(|distro_release| match distro_release.created {
+                Some(created) => date > created,
+                None => false,
+            })
+            .collect()
+    }
+
     pub fn iter(&self) -> ::std::slice::Iter<DistroRelease> {
         self._releases.iter()
     }
@@ -236,6 +248,18 @@ mod tests {
             .map(|distro_release| distro_release.series.clone())
             .collect();
         assert_eq!(vec!["cosmic".to_string()], devel_series);
+    }
+
+    #[test]
+    fn ubuntu_distro_info_all_at() {
+        let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
+        let date = NaiveDate::from_ymd(2005, 6, 14);
+        let all_series: Vec<String> = ubuntu_distro_info.all_at(date)
+            .iter()
+            .map(|distro_release| distro_release.series.clone())
+            .collect();
+        assert_eq!(vec!["warty".to_string(), "hoary".to_string(), "breezy".to_string()],
+                   all_series);
     }
 
     #[test]
