@@ -22,14 +22,15 @@ enum OutputMode {
     Suppress,
 }
 
-fn determine_day_delta(date: &NaiveDate) -> i64 {
-    date.signed_duration_since(today()).num_days()
+fn determine_day_delta(current_date: NaiveDate, target_date: &NaiveDate) -> i64 {
+    target_date.signed_duration_since(current_date).num_days()
 }
 
 fn output(
     distro_releases: Vec<&DistroRelease>,
     output_mode: OutputMode,
     days_mode: Option<DaysMode>,
+    date: NaiveDate,
 ) -> Result<(), Error> {
     for distro_release in distro_releases {
         let mut output_parts = vec![];
@@ -45,10 +46,13 @@ fn output(
         match days_mode {
             Some(DaysMode::Release) => output_parts.push(format!(
                 "{}",
-                determine_day_delta(&distro_release.release.ok_or(format_err!(
-                    "No release date found for {}",
-                    &distro_release.series
-                ))?)
+                determine_day_delta(
+                    date,
+                    &distro_release.release.ok_or(format_err!(
+                        "No release date found for {}",
+                        &distro_release.series
+                    ))?
+                )
             )),
             None => (),
         }
@@ -156,14 +160,14 @@ fn run() -> Result<(), Error> {
         })
     };
     if matches.is_present("fullname") {
-        output(distro_releases_iter, OutputMode::FullName, days_mode)?;
+        output(distro_releases_iter, OutputMode::FullName, days_mode, date)?;
     } else if matches.is_present("release") {
-        output(distro_releases_iter, OutputMode::Release, days_mode)?;
+        output(distro_releases_iter, OutputMode::Release, days_mode, date)?;
     } else if matches.is_present("codename") || days_mode.is_none() {
         // This should be the default output _unless_ --days is specified
-        output(distro_releases_iter, OutputMode::Codename, days_mode)?;
+        output(distro_releases_iter, OutputMode::Codename, days_mode, date)?;
     } else {
-        output(distro_releases_iter, OutputMode::Suppress, days_mode)?;
+        output(distro_releases_iter, OutputMode::Suppress, days_mode, date)?;
     }
     Ok(())
 }
