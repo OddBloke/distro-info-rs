@@ -62,8 +62,7 @@ testSupported() {
 hardy
 karmic
 lucid
-maverick
-natty"
+maverick"
     success "--date=2011-01-10 --supported" "$result"
 }
 
