@@ -92,11 +92,23 @@ impl UbuntuDistroInfo {
         Ok(distro_info)
     }
 
+    /// Returns a vector of `DistroRelease`s for Ubuntu releases that were releasedat the given
+    /// date
+    pub fn released<'a>(&'a self, date: NaiveDate) -> Vec<&'a DistroRelease> {
+        self._releases
+            .iter()
+            .filter(|distro_release| match distro_release.release {
+                Some(release) => date > release,
+                None => false,
+            })
+            .collect()
+    }
+
     /// Returns a vector of `DistroRelease`s for Ubuntu releases that were released and supported at
     /// the given date
     pub fn supported<'a>(&'a self, date: NaiveDate) -> Vec<&'a DistroRelease> {
-        self._releases
-            .iter()
+        self.released(date)
+            .into_iter()
             .filter(|distro_release| match distro_release.eol {
                 Some(eol) => {
                     match distro_release.eol_server {
@@ -104,10 +116,6 @@ impl UbuntuDistroInfo {
                         None => date < eol,
                     }
                 }
-                None => false,
-            })
-            .filter(|distro_release| match distro_release.release {
-                Some(release) => date > release,
                 None => false,
             })
             .collect()
@@ -259,6 +267,20 @@ mod tests {
                 break;
             }
         }
+    }
+    #[test]
+    fn ubuntu_distro_info_released() {
+        let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
+        let date = NaiveDate::from_ymd(2006, 6, 14);
+        let released_series: Vec<String> = ubuntu_distro_info.released(date)
+            .iter()
+            .map(|distro_release| distro_release.series.clone())
+            .collect();
+        assert_eq!(vec!["warty".to_string(),
+                        "hoary".to_string(),
+                        "breezy".to_string(),
+                        "dapper".to_string()],
+                   released_series);
     }
 
     #[test]
