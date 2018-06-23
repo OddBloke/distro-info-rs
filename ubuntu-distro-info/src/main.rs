@@ -12,6 +12,7 @@ use distro_info::{DistroRelease, UbuntuDistroInfo};
 use failure::{Error, ResultExt};
 
 enum DaysMode {
+    Created,
     Release,
 }
 
@@ -44,6 +45,16 @@ fn output(
             OutputMode::Suppress => (),
         }
         match days_mode {
+            Some(DaysMode::Created) => output_parts.push(format!(
+                "{}",
+                determine_day_delta(
+                    date,
+                    &distro_release.created.ok_or(format_err!(
+                        "No creation date found for {}",
+                        &distro_release.series
+                    ))?
+                )
+            )),
             Some(DaysMode::Release) => output_parts.push(format!(
                 "{}",
                 determine_day_delta(
@@ -88,7 +99,7 @@ fn run() -> Result<(), Error> {
                 .long("days")
                 .takes_value(true)
                 .default_value("release")
-                .possible_values(&["release"]),
+                .possible_values(&["created", "release"]),
         )
         .group(
             ArgGroup::with_name("selector")
@@ -155,6 +166,7 @@ fn run() -> Result<(), Error> {
         None
     } else {
         matches.value_of("days").map(|value| match value {
+            "created" => DaysMode::Created,
             "release" => DaysMode::Release,
             _ => panic!("unknown days mode found; please report a bug"),
         })
