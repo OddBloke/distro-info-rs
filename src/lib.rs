@@ -98,7 +98,7 @@ impl UbuntuDistroInfo {
         self._releases
             .iter()
             .filter(|distro_release| match distro_release.release {
-                Some(release) => date > release,
+                Some(release) => date >= release,
                 None => false,
             })
             .collect()
@@ -112,8 +112,8 @@ impl UbuntuDistroInfo {
             .filter(|distro_release| match distro_release.eol {
                 Some(eol) => {
                     match distro_release.eol_server {
-                        Some(eol_server) => date < ::std::cmp::max(eol, eol_server),
-                        None => date < eol,
+                        Some(eol_server) => date <= ::std::cmp::max(eol, eol_server),
+                        None => date <= eol,
                     }
                 }
                 None => false,
@@ -131,7 +131,7 @@ impl UbuntuDistroInfo {
                 None => false,
             })
             .filter(|distro_release| match distro_release.created {
-                Some(created) => date > created,
+                Some(created) => date >= created,
                 None => false,
             })
             .collect()
@@ -143,7 +143,7 @@ impl UbuntuDistroInfo {
         self._releases
             .iter()
             .filter(|distro_release| match distro_release.created {
-                Some(created) => date > created,
+                Some(created) => date >= created,
                 None => false,
             })
             .collect()
@@ -271,7 +271,8 @@ mod tests {
     #[test]
     fn ubuntu_distro_info_released() {
         let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
-        let date = NaiveDate::from_ymd(2006, 6, 14);
+        // Use dapper's release date to confirm we don't have a boundary issue
+        let date = NaiveDate::from_ymd(2006, 6, 1);
         let released_series: Vec<String> = ubuntu_distro_info.released(date)
             .iter()
             .map(|distro_release| distro_release.series.clone())
@@ -286,7 +287,24 @@ mod tests {
     #[test]
     fn ubuntu_distro_info_supported() {
         let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
-        let date = NaiveDate::from_ymd(2018, 6, 14);
+        // Use bionic's release date to confirm we don't have a boundary issue
+        let date = NaiveDate::from_ymd(2018, 4, 26);
+        let supported_series: Vec<String> = ubuntu_distro_info.supported(date)
+            .iter()
+            .map(|distro_release| distro_release.series.clone())
+            .collect();
+        assert_eq!(vec!["trusty".to_string(),
+                        "xenial".to_string(),
+                        "artful".to_string(),
+                        "bionic".to_string()],
+                   supported_series);
+    }
+
+    #[test]
+    fn ubuntu_distro_info_supported_on_eol_day() {
+        let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
+        // Use artful's EOL date to confirm we don't have a boundary issue
+        let date = NaiveDate::from_ymd(2018, 7, 19);
         let supported_series: Vec<String> = ubuntu_distro_info.supported(date)
             .iter()
             .map(|distro_release| distro_release.series.clone())
@@ -312,7 +330,7 @@ mod tests {
     #[test]
     fn ubuntu_distro_info_devel() {
         let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
-        let date = NaiveDate::from_ymd(2018, 6, 14);
+        let date = NaiveDate::from_ymd(2018, 4, 26);
         let devel_series: Vec<String> = ubuntu_distro_info.devel(date)
             .iter()
             .map(|distro_release| distro_release.series.clone())
@@ -323,7 +341,7 @@ mod tests {
     #[test]
     fn ubuntu_distro_info_all_at() {
         let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
-        let date = NaiveDate::from_ymd(2005, 6, 14);
+        let date = NaiveDate::from_ymd(2005, 4, 8);
         let all_series: Vec<String> = ubuntu_distro_info.all_at(date)
             .iter()
             .map(|distro_release| distro_release.series.clone())
@@ -335,7 +353,7 @@ mod tests {
     #[test]
     fn ubuntu_distro_info_latest() {
         let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
-        let date = NaiveDate::from_ymd(2005, 6, 14);
+        let date = NaiveDate::from_ymd(2005, 4, 8);
         let latest_series = ubuntu_distro_info.latest(date).series.clone();
         assert_eq!("breezy".to_string(), latest_series);
     }
