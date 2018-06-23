@@ -10,14 +10,14 @@ use clap::{Arg, ArgGroup, App};
 use distro_info::{DistroRelease, UbuntuDistroInfo};
 use failure::{Error, ResultExt};
 
-fn all<'a>(ubuntu_distro_info: &'a UbuntuDistroInfo) -> Vec<&'a DistroRelease> {
+fn all<'a>(ubuntu_distro_info: &'a UbuntuDistroInfo, when: NaiveDate) -> Vec<&'a DistroRelease> {
     ubuntu_distro_info.iter().collect()
 }
 
-fn supported<'a>(ubuntu_distro_info: &'a UbuntuDistroInfo) -> Vec<&'a DistroRelease> {
-    let now = Utc::now();
-    let today = NaiveDate::from_ymd(now.year(), now.month(), now.day());
-    ubuntu_distro_info.supported(today)
+fn supported<'a>(ubuntu_distro_info: &'a UbuntuDistroInfo,
+                 when: NaiveDate)
+                 -> Vec<&'a DistroRelease> {
+    ubuntu_distro_info.supported(when)
 }
 
 enum OutputMode {
@@ -37,6 +37,11 @@ fn output(distro_releases: Vec<&DistroRelease>, output_mode: OutputMode) {
     }
 }
 
+fn today() -> NaiveDate {
+    let now = Utc::now();
+    NaiveDate::from_ymd(now.year(), now.month(), now.day())
+}
+
 fn run() -> Result<(), Error> {
     let matches = App::new("ubuntu-distro-info")
         .version("0.1.0")
@@ -52,15 +57,15 @@ fn run() -> Result<(), Error> {
         .get_matches();
     let ubuntu_distro_info = UbuntuDistroInfo::new()?;
     let date = match matches.value_of("date") {
-        Some(date_str) => Some(
+        Some(date_str) =>
             NaiveDate::parse_from_str(date_str, "%Y-%m-%d").context(
-                format!("Failed to parse date '{}'; must be YYYY-MM-DD format", date_str))?),
-        None => None,
+                format!("Failed to parse date '{}'; must be YYYY-MM-DD format", date_str))?,
+        None => today(),
     };
     let distro_releases_iter = if matches.is_present("all") {
-        all(&ubuntu_distro_info)
+        all(&ubuntu_distro_info, date)
     } else if matches.is_present("supported") {
-        supported(&ubuntu_distro_info)
+        supported(&ubuntu_distro_info, date)
     } else {
         panic!("clap prevent us from reaching here; report a bug if you see this")
     };
