@@ -132,6 +132,13 @@ impl UbuntuDistroInfo {
             .collect()
     }
 
+    /// Returns a `DistroRelease` for the latest Ubuntu release at the given date
+    pub fn latest<'a>(&'a self, date: NaiveDate) -> &DistroRelease {
+        // This will only be None if there are no entries in the CSV, which means things are very
+        // broken
+        self.all_at(date).last().unwrap()
+    }
+
     pub fn iter(&self) -> ::std::slice::Iter<DistroRelease> {
         self._releases.iter()
     }
@@ -260,6 +267,14 @@ mod tests {
             .collect();
         assert_eq!(vec!["warty".to_string(), "hoary".to_string(), "breezy".to_string()],
                    all_series);
+    }
+
+    #[test]
+    fn ubuntu_distro_info_latest() {
+        let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
+        let date = NaiveDate::from_ymd(2005, 6, 14);
+        let latest_series = ubuntu_distro_info.latest(date).series.clone();
+        assert_eq!("breezy".to_string(), latest_series);
     }
 
     #[test]
