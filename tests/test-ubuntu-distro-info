@@ -333,4 +333,4 @@ testDays() {
     success "--devel --date=$date --days=eol -f" "Ubuntu 13.04 \"Raring Ringtail\" 278"
 }
 
-. shunit2
+. $(which shunit2)
