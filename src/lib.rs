@@ -15,13 +15,13 @@ use failure::Error;
 const UBUNTU_CSV_PATH: &str = "/usr/share/distro-info/ubuntu.csv";
 
 pub struct DistroRelease {
-    pub version: String,
-    pub codename: String,
-    pub series: String,
-    pub created: Option<NaiveDate>,
-    pub release: Option<NaiveDate>,
-    pub eol: Option<NaiveDate>,
-    pub eol_server: Option<NaiveDate>,
+    version: String,
+    codename: String,
+    series: String,
+    created: Option<NaiveDate>,
+    release: Option<NaiveDate>,
+    eol: Option<NaiveDate>,
+    eol_server: Option<NaiveDate>,
 }
 
 impl DistroRelease {
@@ -45,6 +45,30 @@ impl DistroRelease {
         }
     }
 
+    // Getters
+    pub fn version(&self) -> &String {
+        &self.version
+    }
+    pub fn codename(&self) -> &String {
+        &self.codename
+    }
+    pub fn series(&self) -> &String {
+        &self.series
+    }
+    pub fn created(&self) -> &Option<NaiveDate> {
+        &self.created
+    }
+    pub fn release(&self) -> &Option<NaiveDate> {
+        &self.release
+    }
+    pub fn eol(&self) -> &Option<NaiveDate> {
+        &self.eol
+    }
+    pub fn eol_server(&self) -> &Option<NaiveDate> {
+        &self.eol_server
+    }
+
+    // Non-getters
     pub fn is_lts(&self) -> bool {
         self.version.contains("LTS")
     }
@@ -232,6 +256,14 @@ mod tests {
         assert_eq!(Some(get_date(1)), distro_release.release);
         assert_eq!(Some(get_date(2)), distro_release.eol);
         assert_eq!(Some(get_date(3)), distro_release.eol_server);
+
+        assert_eq!(&"version", distro_release.version());
+        assert_eq!(&"codename", distro_release.codename());
+        assert_eq!(&"series", distro_release.series());
+        assert_eq!(&Some(get_date(0)), distro_release.created());
+        assert_eq!(&Some(get_date(1)), distro_release.release());
+        assert_eq!(&Some(get_date(2)), distro_release.eol());
+        assert_eq!(&Some(get_date(3)), distro_release.eol_server());
     }
 
     #[test]
