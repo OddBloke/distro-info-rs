@@ -132,6 +132,15 @@ impl UbuntuDistroInfo {
             .collect()
     }
 
+    /// Returns a vector of `DistroRelease`s for Ubuntu releases that were released but no longer
+    /// supported at the given date
+    pub fn unsupported<'a>(&'a self, date: NaiveDate) -> Vec<&'a DistroRelease> {
+        self.released(date)
+            .into_iter()
+            .filter(|distro_release| !distro_release.supported_at(&date))
+            .collect()
+    }
+
     /// Returns a vector of `DistroRelease`s for Ubuntu releases that were in development at the
     /// given date
     pub fn devel<'a>(&'a self, date: NaiveDate) -> Vec<&'a DistroRelease> {
@@ -364,6 +373,22 @@ mod tests {
                 "bionic".to_string(),
             ],
             supported_series
+        );
+    }
+
+    #[test]
+    fn ubuntu_distro_info_unsupported() {
+        let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
+        // Use bionic's release date to confirm we don't have a boundary issue
+        let date = NaiveDate::from_ymd(2006, 11, 1);
+        let unsupported_series: Vec<String> = ubuntu_distro_info
+            .unsupported(date)
+            .iter()
+            .map(|distro_release| distro_release.series.clone())
+            .collect();
+        assert_eq!(
+            vec!["warty".to_string(), "hoary".to_string()],
+            unsupported_series
         );
     }
 
