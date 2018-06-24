@@ -1,3 +1,17 @@
+<a name="0.3.0"></a>
+## 0.3.0 (2018-06-24)
+
+
+#### Breaking Changes
+
+* **distro-info:**  make DistroRelease fields private ([07f808a3](https://github.com/OddBloke/distro-info-rs/commit/07f808a31753f0d61ec0fe1675e300b18a3d99cf), breaks [#](https://github.com/OddBloke/distro-info-rs/issues/))
+
+#### Features
+
+* **distro-info:**  make DistroRelease fields private ([07f808a3](https://github.com/OddBloke/distro-info-rs/commit/07f808a31753f0d61ec0fe1675e300b18a3d99cf), breaks [#](https://github.com/OddBloke/distro-info-rs/issues/))
+
+
+
 <a name="0.2.0"></a>
 ## 0.2.0 (2018-06-24)
 
