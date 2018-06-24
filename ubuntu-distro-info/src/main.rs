@@ -94,6 +94,7 @@ fn run() -> Result<(), Error> {
         .arg(Arg::with_name("series").long("series").takes_value(true))
         .arg(Arg::with_name("stable").short("s").long("stable"))
         .arg(Arg::with_name("supported").long("supported"))
+        .arg(Arg::with_name("unsupported").long("unsupported"))
         .arg(Arg::with_name("codename").short("c").long("codename"))
         .arg(Arg::with_name("fullname").short("f").long("fullname"))
         .arg(Arg::with_name("release").short("r").long("release"))
@@ -116,6 +117,7 @@ fn run() -> Result<(), Error> {
                     "series",
                     "stable",
                     "supported",
+                    "unsupported",
                 ])
                 .required(true),
         )
@@ -133,6 +135,8 @@ fn run() -> Result<(), Error> {
         ubuntu_distro_info.iter().collect()
     } else if matches.is_present("supported") {
         ubuntu_distro_info.supported(date)
+    } else if matches.is_present("unsupported") {
+        ubuntu_distro_info.unsupported(date)
     } else if matches.is_present("devel") {
         ubuntu_distro_info.devel(date)
     } else if matches.is_present("latest") {
