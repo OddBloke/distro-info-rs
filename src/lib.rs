@@ -48,6 +48,23 @@ impl DistroRelease {
     pub fn is_lts(&self) -> bool {
         self.version.contains("LTS")
     }
+
+    pub fn released_at(&self, date: &NaiveDate) -> bool {
+        match self.release {
+            Some(release) => date >= &release,
+            None => false,
+        }
+    }
+
+    pub fn supported_at(&self, date: &NaiveDate) -> bool {
+        self.released_at(date) && match self.eol {
+            Some(eol) => match self.eol_server {
+                Some(eol_server) => date <= ::std::cmp::max(&eol, &eol_server),
+                None => date <= &eol,
+            },
+            None => false,
+        }
+    }
 }
 
 pub struct UbuntuDistroInfo {
@@ -102,10 +119,7 @@ impl UbuntuDistroInfo {
     pub fn released<'a>(&'a self, date: NaiveDate) -> Vec<&'a DistroRelease> {
         self._releases
             .iter()
-            .filter(|distro_release| match distro_release.release {
-                Some(release) => date >= release,
-                None => false,
-            })
+            .filter(|distro_release| distro_release.released_at(&date))
             .collect()
     }
 
@@ -114,13 +128,7 @@ impl UbuntuDistroInfo {
     pub fn supported<'a>(&'a self, date: NaiveDate) -> Vec<&'a DistroRelease> {
         self.released(date)
             .into_iter()
-            .filter(|distro_release| match distro_release.eol {
-                Some(eol) => match distro_release.eol_server {
-                    Some(eol_server) => date <= ::std::cmp::max(eol, eol_server),
-                    None => date <= eol,
-                },
-                None => false,
-            })
+            .filter(|distro_release| distro_release.supported_at(&date))
             .collect()
     }
 
@@ -240,6 +248,44 @@ mod tests {
             Some(NaiveDate::from_ymd(2018, 6, 14)),
         );
         assert!(!distro_release.is_lts());
+    }
+
+    #[test]
+    fn distro_release_released_at() {
+        let distro_release = DistroRelease::new(
+            "98.04 LTS".to_string(),
+            "codename".to_string(),
+            "series".to_string(),
+            Some(NaiveDate::from_ymd(2018, 6, 14)),
+            Some(NaiveDate::from_ymd(2018, 6, 14)),
+            Some(NaiveDate::from_ymd(2018, 6, 16)),
+            Some(NaiveDate::from_ymd(2018, 6, 14)),
+        );
+        // not released before release day
+        assert!(!distro_release.released_at(&NaiveDate::from_ymd(2018, 6, 13)));
+        // released on release day
+        assert!(distro_release.released_at(&NaiveDate::from_ymd(2018, 6, 14)));
+        // still released after EOL
+        assert!(distro_release.released_at(&NaiveDate::from_ymd(2018, 6, 17)));
+    }
+
+    #[test]
+    fn distro_release_supported_at() {
+        let distro_release = DistroRelease::new(
+            "98.04 LTS".to_string(),
+            "codename".to_string(),
+            "series".to_string(),
+            Some(NaiveDate::from_ymd(2018, 6, 14)),
+            Some(NaiveDate::from_ymd(2018, 6, 14)),
+            Some(NaiveDate::from_ymd(2018, 6, 16)),
+            Some(NaiveDate::from_ymd(2018, 6, 14)),
+        );
+        // not supported before release day
+        assert!(!distro_release.supported_at(&NaiveDate::from_ymd(2018, 6, 13)));
+        // supported on release day
+        assert!(distro_release.supported_at(&NaiveDate::from_ymd(2018, 6, 14)));
+        // not supported after EOL
+        assert!(!distro_release.supported_at(&NaiveDate::from_ymd(2018, 6, 17)));
     }
 
     #[test]
