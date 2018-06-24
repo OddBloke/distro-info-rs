@@ -38,27 +38,28 @@ fn output(
     for distro_release in distro_releases {
         let mut output_parts = vec![];
         match output_mode {
-            OutputMode::Codename => output_parts.push(format!("{}", &distro_release.series)),
-            OutputMode::Release => output_parts.push(format!("{}", &distro_release.version)),
+            OutputMode::Codename => output_parts.push(format!("{}", &distro_release.series())),
+            OutputMode::Release => output_parts.push(format!("{}", &distro_release.version())),
             OutputMode::FullName => output_parts.push(format!(
                 "Ubuntu {} \"{}\"",
-                &distro_release.version, &distro_release.codename
+                &distro_release.version(),
+                &distro_release.codename()
             )),
             OutputMode::Suppress => (),
         }
         let target_date = match days_mode {
-            Some(DaysMode::Created) => Some(distro_release.created.ok_or(format_err!(
+            Some(DaysMode::Created) => Some(distro_release.created().ok_or(format_err!(
                 "No creation date found for {}",
-                &distro_release.series
+                &distro_release.series()
             ))?),
-            Some(DaysMode::Eol) => Some(distro_release.eol.ok_or(format_err!(
+            Some(DaysMode::Eol) => Some(distro_release.eol().ok_or(format_err!(
                 "No EOL date found for {}",
-                &distro_release.series
+                &distro_release.series()
             ))?),
-            Some(DaysMode::EolServer) => distro_release.eol_server,
-            Some(DaysMode::Release) => Some(distro_release.release.ok_or(format_err!(
+            Some(DaysMode::EolServer) => distro_release.eol_server().clone(),
+            Some(DaysMode::Release) => Some(distro_release.release().ok_or(format_err!(
                 "No release date found for {}",
-                &distro_release.series
+                &distro_release.series()
             ))?),
             None => None,
         };
@@ -216,7 +217,7 @@ fn run() -> Result<(), Error> {
                 };
                 let candidates: Vec<&DistroRelease> = ubuntu_distro_info
                     .iter()
-                    .filter(|distro_release| distro_release.series == needle_series)
+                    .filter(|distro_release| distro_release.series() == needle_series)
                     .collect();
                 if candidates.len() == 0 {
                     bail!("unknown distribution series `{}'", needle_series);
