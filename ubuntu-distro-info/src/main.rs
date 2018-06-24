@@ -154,6 +154,12 @@ fn run() -> Result<(), Error> {
     } else if matches.is_present("series") {
         match matches.value_of("series") {
             Some(needle_series) => {
+                if !needle_series
+                    .chars()
+                    .fold(true, |acc, c| acc && c.is_lowercase())
+                {
+                    bail!("invalid distribution series `{}'", needle_series);
+                };
                 let candidates: Vec<&DistroRelease> = ubuntu_distro_info
                     .iter()
                     .filter(|distro_release| distro_release.series == needle_series)
