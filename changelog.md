@@ -1,3 +1,17 @@
+<a name="0.2.0"></a>
+## 0.2.0 (2018-06-24)
+
+
+#### Features
+
+* **distro-info:**
+  *  add UbuntuDistroInfo.unsupported ([f136a27b](https://github.com/OddBloke/distro-info-rs/commit/f136a27b91fcfbabb3e05431e01adaac9d130ae8))
+  *  implement DistroRelease.{released_at,supported_at} ([f1d55202](https://github.com/OddBloke/distro-info-rs/commit/f1d552021222fd3a9939c5c2c93b42d9a8983d16))
+* **ubuntu-distro-info:**
+  *  initial release
+
+
+
 <a name="0.1.3"></a>
 ## 0.1.3 (2018-06-23)
 
