@@ -100,6 +100,7 @@ fn run() -> Result<(), Error> {
         .arg(Arg::with_name("date").long("date").takes_value(true))
         .arg(
             Arg::with_name("days")
+                .short("y")
                 .long("days")
                 .takes_value(true)
                 .default_value("release")
