@@ -33,8 +33,8 @@ impl DistroRelease {
         release: Option<NaiveDate>,
         eol: Option<NaiveDate>,
         eol_server: Option<NaiveDate>,
-    ) -> DistroRelease {
-        DistroRelease {
+    ) -> Self {
+        Self {
             version,
             codename,
             series,
@@ -92,15 +92,15 @@ impl DistroRelease {
 }
 
 pub struct UbuntuDistroInfo {
-    _releases: Vec<DistroRelease>,
+    releases: Vec<DistroRelease>,
 }
 
 /// A struct capturing the Ubuntu releases stored in `/usr/share/distro-info/ubuntu.csv`
 impl UbuntuDistroInfo {
     /// Open `/usr/share/distro-info/ubuntu.csv` and parse the Ubuntu release data contained
     /// therein
-    pub fn new() -> Result<UbuntuDistroInfo, Error> {
-        let mut distro_info = UbuntuDistroInfo { _releases: vec![] };
+    pub fn new() -> Result<Self, Error> {
+        let mut distro_info = Self { releases: vec![] };
         let mut rdr = ReaderBuilder::new()
             .flexible(true)
             .from_path(UBUNTU_CSV_PATH)?;
@@ -125,7 +125,7 @@ impl UbuntuDistroInfo {
 
         for record in rdr.records() {
             let record = record?;
-            distro_info._releases.push(DistroRelease::new(
+            distro_info.releases.push(DistroRelease::new(
                 parse_required_str(&record.get(0))?,
                 parse_required_str(&record.get(1))?,
                 parse_required_str(&record.get(2))?,
@@ -141,7 +141,7 @@ impl UbuntuDistroInfo {
     /// Returns a vector of `DistroRelease`s for Ubuntu releases that were releasedat the given
     /// date
     pub fn released<'a>(&'a self, date: NaiveDate) -> Vec<&'a DistroRelease> {
-        self._releases
+        self.releases
             .iter()
             .filter(|distro_release| distro_release.released_at(date))
             .collect()
@@ -180,7 +180,7 @@ impl UbuntuDistroInfo {
     /// Returns a vector of `DistroRelease`s for Ubuntu releases that had been created at the given
     /// date
     pub fn all_at<'a>(&'a self, date: NaiveDate) -> Vec<&'a DistroRelease> {
-        self._releases
+        self.releases
             .iter()
             .filter(|distro_release| match distro_release.created {
                 Some(created) => date >= created,
@@ -197,7 +197,7 @@ impl UbuntuDistroInfo {
     }
 
     pub fn iter(&self) -> ::std::slice::Iter<DistroRelease> {
-        self._releases.iter()
+        self.releases.iter()
     }
 }
 
@@ -206,7 +206,7 @@ impl IntoIterator for UbuntuDistroInfo {
     type IntoIter = ::std::vec::IntoIter<DistroRelease>;
 
     fn into_iter(self) -> Self::IntoIter {
-        self._releases.into_iter()
+        self.releases.into_iter()
     }
 }
 
