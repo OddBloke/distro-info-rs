@@ -35,13 +35,13 @@ impl DistroRelease {
         eol_server: Option<NaiveDate>,
     ) -> DistroRelease {
         DistroRelease {
-            version: version,
-            codename: codename,
-            series: series,
-            created: created,
-            release: release,
-            eol: eol,
-            eol_server: eol_server,
+            version,
+            codename,
+            series,
+            created,
+            release,
+            eol,
+            eol_server,
         }
     }
 
@@ -73,18 +73,18 @@ impl DistroRelease {
         self.version.contains("LTS")
     }
 
-    pub fn released_at(&self, date: &NaiveDate) -> bool {
+    pub fn released_at(&self, date: NaiveDate) -> bool {
         match self.release {
-            Some(release) => date >= &release,
+            Some(release) => date >= release,
             None => false,
         }
     }
 
-    pub fn supported_at(&self, date: &NaiveDate) -> bool {
+    pub fn supported_at(&self, date: NaiveDate) -> bool {
         self.released_at(date) && match self.eol {
             Some(eol) => match self.eol_server {
-                Some(eol_server) => date <= ::std::cmp::max(&eol, &eol_server),
-                None => date <= &eol,
+                Some(eol_server) => date <= ::std::cmp::max(eol, eol_server),
+                None => date <= eol,
             },
             None => false,
         }
@@ -111,15 +111,15 @@ impl UbuntuDistroInfo {
                 .to_string())
         };
         let parse_date = |field: &Option<&str>| -> Result<Option<NaiveDate>, Error> {
-            match field {
-                &Some(field) => Ok(Some(NaiveDate::parse_from_str(field, "%Y-%m-%d")?)),
-                &None => Err(format_err!("unexpected error from: {:?}", field)),
+            match *field {
+                Some(field) => Ok(Some(NaiveDate::parse_from_str(field, "%Y-%m-%d")?)),
+                None => Err(format_err!("unexpected error from: {:?}", field)),
             }
         };
         let parse_server_eol = |field: &Option<&str>| -> Result<Option<NaiveDate>, Error> {
-            match field {
-                &Some(field) => parse_date(&Some(field)),
-                &None => Ok(None),
+            match *field {
+                Some(field) => parse_date(&Some(field)),
+                None => Ok(None),
             }
         };
 
@@ -143,7 +143,7 @@ impl UbuntuDistroInfo {
     pub fn released<'a>(&'a self, date: NaiveDate) -> Vec<&'a DistroRelease> {
         self._releases
             .iter()
-            .filter(|distro_release| distro_release.released_at(&date))
+            .filter(|distro_release| distro_release.released_at(date))
             .collect()
     }
 
@@ -152,7 +152,7 @@ impl UbuntuDistroInfo {
     pub fn supported<'a>(&'a self, date: NaiveDate) -> Vec<&'a DistroRelease> {
         self.released(date)
             .into_iter()
-            .filter(|distro_release| distro_release.supported_at(&date))
+            .filter(|distro_release| distro_release.supported_at(date))
             .collect()
     }
 
@@ -161,7 +161,7 @@ impl UbuntuDistroInfo {
     pub fn unsupported<'a>(&'a self, date: NaiveDate) -> Vec<&'a DistroRelease> {
         self.released(date)
             .into_iter()
-            .filter(|distro_release| !distro_release.supported_at(&date))
+            .filter(|distro_release| !distro_release.supported_at(date))
             .collect()
     }
 
@@ -190,7 +190,7 @@ impl UbuntuDistroInfo {
     }
 
     /// Returns a `DistroRelease` for the latest Ubuntu release at the given date
-    pub fn latest<'a>(&'a self, date: NaiveDate) -> &DistroRelease {
+    pub fn latest(&self, date: NaiveDate) -> &DistroRelease {
         // This will only be None if there are no entries in the CSV, which means things are very
         // broken
         self.all_at(date).last().unwrap()
@@ -303,11 +303,11 @@ mod tests {
             Some(NaiveDate::from_ymd(2018, 6, 14)),
         );
         // not released before release day
-        assert!(!distro_release.released_at(&NaiveDate::from_ymd(2018, 6, 13)));
+        assert!(!distro_release.released_at(NaiveDate::from_ymd(2018, 6, 13)));
         // released on release day
-        assert!(distro_release.released_at(&NaiveDate::from_ymd(2018, 6, 14)));
+        assert!(distro_release.released_at(NaiveDate::from_ymd(2018, 6, 14)));
         // still released after EOL
-        assert!(distro_release.released_at(&NaiveDate::from_ymd(2018, 6, 17)));
+        assert!(distro_release.released_at(NaiveDate::from_ymd(2018, 6, 17)));
     }
 
     #[test]
@@ -322,11 +322,11 @@ mod tests {
             Some(NaiveDate::from_ymd(2018, 6, 14)),
         );
         // not supported before release day
-        assert!(!distro_release.supported_at(&NaiveDate::from_ymd(2018, 6, 13)));
+        assert!(!distro_release.supported_at(NaiveDate::from_ymd(2018, 6, 13)));
         // supported on release day
-        assert!(distro_release.supported_at(&NaiveDate::from_ymd(2018, 6, 14)));
+        assert!(distro_release.supported_at(NaiveDate::from_ymd(2018, 6, 14)));
         // not supported after EOL
-        assert!(!distro_release.supported_at(&NaiveDate::from_ymd(2018, 6, 17)));
+        assert!(!distro_release.supported_at(NaiveDate::from_ymd(2018, 6, 17)));
     }
 
     #[test]
