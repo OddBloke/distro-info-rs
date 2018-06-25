@@ -25,21 +25,21 @@ enum OutputMode {
     Suppress,
 }
 
-fn determine_day_delta(current_date: NaiveDate, target_date: &NaiveDate) -> i64 {
+fn determine_day_delta(current_date: NaiveDate, target_date: NaiveDate) -> i64 {
     target_date.signed_duration_since(current_date).num_days()
 }
 
 fn output(
     distro_releases: Vec<&DistroRelease>,
-    output_mode: OutputMode,
-    days_mode: Option<DaysMode>,
+    output_mode: &OutputMode,
+    days_mode: &Option<DaysMode>,
     date: NaiveDate,
 ) -> Result<(), Error> {
     for distro_release in distro_releases {
         let mut output_parts = vec![];
         match output_mode {
-            OutputMode::Codename => output_parts.push(format!("{}", &distro_release.series())),
-            OutputMode::Release => output_parts.push(format!("{}", &distro_release.version())),
+            OutputMode::Codename => output_parts.push(distro_release.series().to_string()),
+            OutputMode::Release => output_parts.push(distro_release.version().to_string()),
             OutputMode::FullName => output_parts.push(format!(
                 "Ubuntu {} \"{}\"",
                 &distro_release.version(),
@@ -56,7 +56,7 @@ fn output(
                 "No EOL date found for {}",
                 &distro_release.series()
             ))?),
-            Some(DaysMode::EolServer) => distro_release.eol_server().clone(),
+            Some(DaysMode::EolServer) => *distro_release.eol_server(),
             Some(DaysMode::Release) => Some(distro_release.release().ok_or(format_err!(
                 "No release date found for {}",
                 &distro_release.series()
@@ -65,11 +65,10 @@ fn output(
         };
         match target_date {
             Some(target_date) => {
-                output_parts.push(format!("{}", determine_day_delta(date, &target_date)));
+                output_parts.push(format!("{}", determine_day_delta(date, target_date)));
             }
-            None => match days_mode {
-                Some(DaysMode::EolServer) => output_parts.push("(unknown)".to_string()),
-                _ => (),
+            None => if let Some(DaysMode::EolServer) = days_mode {
+                output_parts.push("(unknown)".to_string())
             },
         };
         if !output_parts.is_empty() {
@@ -203,23 +202,20 @@ fn run() -> Result<(), Error> {
                 lts_releases.push(distro_release);
             }
         }
-        vec![lts_releases.last().unwrap().clone()]
+        vec![*lts_releases.last().unwrap()]
     } else if matches.is_present("stable") {
-        vec![ubuntu_distro_info.supported(date).last().unwrap().clone()]
+        vec![*ubuntu_distro_info.supported(date).last().unwrap()]
     } else if matches.is_present("series") {
         match matches.value_of("series") {
             Some(needle_series) => {
-                if !needle_series
-                    .chars()
-                    .fold(true, |acc, c| acc && c.is_lowercase())
-                {
+                if !needle_series.chars().all(|c| c.is_lowercase()) {
                     bail!("invalid distribution series `{}'", needle_series);
                 };
                 let candidates: Vec<&DistroRelease> = ubuntu_distro_info
                     .iter()
                     .filter(|distro_release| distro_release.series() == needle_series)
                     .collect();
-                if candidates.len() == 0 {
+                if candidates.is_empty() {
                     bail!("unknown distribution series `{}'", needle_series);
                 };
                 Ok(candidates)
@@ -244,14 +240,29 @@ fn run() -> Result<(), Error> {
         })
     };
     if matches.is_present("fullname") {
-        output(distro_releases_iter, OutputMode::FullName, days_mode, date)?;
+        output(
+            distro_releases_iter,
+            &OutputMode::FullName,
+            &days_mode,
+            date,
+        )?;
     } else if matches.is_present("release") {
-        output(distro_releases_iter, OutputMode::Release, days_mode, date)?;
+        output(distro_releases_iter, &OutputMode::Release, &days_mode, date)?;
     } else if matches.is_present("codename") || days_mode.is_none() {
         // This should be the default output _unless_ --days is specified
-        output(distro_releases_iter, OutputMode::Codename, days_mode, date)?;
+        output(
+            distro_releases_iter,
+            &OutputMode::Codename,
+            &days_mode,
+            date,
+        )?;
     } else {
-        output(distro_releases_iter, OutputMode::Suppress, days_mode, date)?;
+        output(
+            distro_releases_iter,
+            &OutputMode::Suppress,
+            &days_mode,
+            date,
+        )?;
     }
     Ok(())
 }
