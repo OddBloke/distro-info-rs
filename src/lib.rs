@@ -97,14 +97,15 @@ pub struct UbuntuDistroInfo {
 
 /// A struct capturing the Ubuntu releases stored in `/usr/share/distro-info/ubuntu.csv`
 impl UbuntuDistroInfo {
-    /// Open `/usr/share/distro-info/ubuntu.csv` and parse the Ubuntu release data contained
-    /// therein
-    pub fn new() -> Result<Self, Error> {
-        let mut distro_info = Self { releases: vec![] };
-        let mut rdr = ReaderBuilder::new()
-            .flexible(true)
-            .from_path(UBUNTU_CSV_PATH)?;
-
+    /// Initialise an UbuntuDistroInfo struct from a vector of DistroReleases
+    pub fn from_vec(releases: Vec<DistroRelease>) -> Self {
+        UbuntuDistroInfo { releases }
+    }
+    /// Read records from the given CSV reader to create an UbuntuDistroInfo object
+    ///
+    /// (These records must be in the format used in ubuntu.csv as provided by the distro-info-data
+    /// package in Debian/Ubuntu.)
+    pub fn from_csv_reader<T: std::io::Read>(mut rdr: csv::Reader<T>) -> Result<Self, Error> {
         let parse_required_str = |field: &Option<&str>| -> Result<String, Error> {
             Ok(field
                 .ok_or(format_err!("failed to read required option"))?
@@ -123,9 +124,10 @@ impl UbuntuDistroInfo {
             }
         };
 
+        let mut releases = vec![];
         for record in rdr.records() {
             let record = record?;
-            distro_info.releases.push(DistroRelease::new(
+            releases.push(DistroRelease::new(
                 parse_required_str(&record.get(0))?,
                 parse_required_str(&record.get(1))?,
                 parse_required_str(&record.get(2))?,
@@ -135,7 +137,17 @@ impl UbuntuDistroInfo {
                 parse_server_eol(&record.get(6))?,
             ))
         }
-        Ok(distro_info)
+        Ok(Self::from_vec(releases))
+    }
+
+    /// Open `/usr/share/distro-info/ubuntu.csv` and parse the Ubuntu release data contained
+    /// therein
+    pub fn new() -> Result<Self, Error> {
+        Self::from_csv_reader(
+            ReaderBuilder::new()
+                .flexible(true)
+                .from_path(UBUNTU_CSV_PATH)?,
+        )
     }
 
     /// Returns a vector of `DistroRelease`s for Ubuntu releases that were releasedat the given
