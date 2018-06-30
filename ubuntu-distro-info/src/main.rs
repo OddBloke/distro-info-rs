@@ -202,7 +202,10 @@ fn run() -> Result<(), Error> {
                 lts_releases.push(distro_release);
             }
         }
-        vec![*lts_releases.last().unwrap()]
+        match lts_releases.last() {
+            Some(release) => vec![*release],
+            None => bail!("No matching release found"),
+        }
     } else if matches.is_present("stable") {
         vec![*ubuntu_distro_info.supported(date).last().unwrap()]
     } else if matches.is_present("series") {
