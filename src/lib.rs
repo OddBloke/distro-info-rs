@@ -81,13 +81,14 @@ impl DistroRelease {
     }
 
     pub fn supported_at(&self, date: NaiveDate) -> bool {
-        self.released_at(date) && match self.eol {
-            Some(eol) => match self.eol_server {
-                Some(eol_server) => date <= ::std::cmp::max(eol, eol_server),
-                None => date <= eol,
-            },
-            None => false,
-        }
+        self.released_at(date)
+            && match self.eol {
+                Some(eol) => match self.eol_server {
+                    Some(eol_server) => date <= ::std::cmp::max(eol, eol_server),
+                    None => date <= eol,
+                },
+                None => false,
+            }
     }
 }
 
@@ -152,7 +153,7 @@ impl UbuntuDistroInfo {
 
     /// Returns a vector of `DistroRelease`s for Ubuntu releases that were releasedat the given
     /// date
-    pub fn released<'a>(&'a self, date: NaiveDate) -> Vec<&'a DistroRelease> {
+    pub fn released(&self, date: NaiveDate) -> Vec<&DistroRelease> {
         self.releases
             .iter()
             .filter(|distro_release| distro_release.released_at(date))
@@ -161,7 +162,7 @@ impl UbuntuDistroInfo {
 
     /// Returns a vector of `DistroRelease`s for Ubuntu releases that were released and supported at
     /// the given date
-    pub fn supported<'a>(&'a self, date: NaiveDate) -> Vec<&'a DistroRelease> {
+    pub fn supported(&self, date: NaiveDate) -> Vec<&DistroRelease> {
         self.released(date)
             .into_iter()
             .filter(|distro_release| distro_release.supported_at(date))
@@ -170,7 +171,7 @@ impl UbuntuDistroInfo {
 
     /// Returns a vector of `DistroRelease`s for Ubuntu releases that were released but no longer
     /// supported at the given date
-    pub fn unsupported<'a>(&'a self, date: NaiveDate) -> Vec<&'a DistroRelease> {
+    pub fn unsupported(&self, date: NaiveDate) -> Vec<&DistroRelease> {
         self.released(date)
             .into_iter()
             .filter(|distro_release| !distro_release.supported_at(date))
@@ -179,7 +180,7 @@ impl UbuntuDistroInfo {
 
     /// Returns a vector of `DistroRelease`s for Ubuntu releases that were in development at the
     /// given date
-    pub fn devel<'a>(&'a self, date: NaiveDate) -> Vec<&'a DistroRelease> {
+    pub fn devel(&self, date: NaiveDate) -> Vec<&DistroRelease> {
         self.all_at(date)
             .into_iter()
             .filter(|distro_release| match distro_release.release {
@@ -191,7 +192,7 @@ impl UbuntuDistroInfo {
 
     /// Returns a vector of `DistroRelease`s for Ubuntu releases that had been created at the given
     /// date
-    pub fn all_at<'a>(&'a self, date: NaiveDate) -> Vec<&'a DistroRelease> {
+    pub fn all_at(&self, date: NaiveDate) -> Vec<&DistroRelease> {
         self.releases
             .iter()
             .filter(|distro_release| match distro_release.created {
@@ -239,7 +240,6 @@ mod tests {
             eol: Some(NaiveDate::from_ymd(2018, 6, 14)),
             eol_server: Some(NaiveDate::from_ymd(2018, 6, 14)),
         };
-        ()
     }
 
     #[test]
@@ -248,7 +248,7 @@ mod tests {
             let mut date = NaiveDate::from_ymd(2018, 6, 14);
             while n > 0 {
                 date = date.succ();
-                n = n - 1;
+                n -= 1;
             }
             date
         };
@@ -344,7 +344,6 @@ mod tests {
     #[test]
     fn ubuntu_distro_info_new() {
         UbuntuDistroInfo::new().unwrap();
-        ()
     }
 
     #[test]
@@ -529,5 +528,4 @@ mod tests {
         let mut iter2 = ubuntu_distro_info.iter();
         assert_eq!(iter1.next().unwrap().series, iter2.next().unwrap().series);
     }
-
 }
