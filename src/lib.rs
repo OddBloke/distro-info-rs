@@ -13,6 +13,7 @@ use csv::ReaderBuilder;
 use failure::Error;
 
 const UBUNTU_CSV_PATH: &str = "/usr/share/distro-info/ubuntu.csv";
+const DEBIAN_CSV_PATH: &str = "/usr/share/distro-info/debian.csv";
 
 pub struct DistroRelease {
     version: String,
@@ -223,11 +224,132 @@ impl IntoIterator for UbuntuDistroInfo {
     }
 }
 
+pub struct DebianDistroInfo {
+    releases: Vec<DistroRelease>,
+}
+
+/// A struct capturing the Debian releases stored in `/usr/share/distro-info/debian.csv`
+impl DebianDistroInfo {
+    /// Initialise an DebianDistroInfo struct from a vector of DistroReleases
+    pub fn from_vec(releases: Vec<DistroRelease>) -> Self {
+        Self { releases }
+    }
+    /// Read records from the given CSV reader to create an UbuntuDistroInfo object
+    ///
+    /// (These records must be in the format used in debian.csv as provided by the distro-info-data
+    /// package in Debian/Ubuntu.)
+    pub fn from_csv_reader<T: std::io::Read>(mut rdr: csv::Reader<T>) -> Result<Self, Error> {
+        let parse_required_str = |field: &Option<&str>| -> Result<String, Error> {
+            Ok(field
+                .ok_or(format_err!("failed to read required option"))?
+                .to_string())
+        };
+        let parse_date = |field: &str| -> Result<NaiveDate, Error> {
+            Ok(NaiveDate::parse_from_str(field, "%Y-%m-%d")?)
+        };
+
+        let mut releases = vec![];
+        for record in rdr.records() {
+            let record = record?;
+            releases.push(DistroRelease::new(
+                parse_required_str(&record.get(0))?,
+                parse_required_str(&record.get(1))?,
+                parse_required_str(&record.get(2))?,
+                record.get(3).map(parse_date).transpose()?,
+                record.get(4).map(parse_date).transpose()?,
+                record.get(5).map(parse_date).transpose()?,
+                record.get(6).map(parse_date).transpose()?,
+            ))
+        }
+        Ok(Self::from_vec(releases))
+    }
+
+    /// Open `/usr/share/distro-info/debian.csv` and parse the Debian release data contained
+    /// therein
+    pub fn new() -> Result<Self, Error> {
+        Self::from_csv_reader(
+            ReaderBuilder::new()
+                .flexible(true)
+                .from_path(DEBIAN_CSV_PATH)?,
+        )
+    }
+
+    /// Returns a vector of `DistroRelease`s for Debian releases that were releasedat the given
+    /// date
+    pub fn released<'a>(&'a self, date: NaiveDate) -> Vec<&'a DistroRelease> {
+        self.releases
+            .iter()
+            .filter(|distro_release| distro_release.released_at(date))
+            .collect()
+    }
+
+    /// Returns a vector of `DistroRelease`s for Debian releases that were released and supported at
+    /// the given date
+    pub fn supported<'a>(&'a self, date: NaiveDate) -> Vec<&'a DistroRelease> {
+        self.released(date)
+            .into_iter()
+            .filter(|distro_release| distro_release.supported_at(date))
+            .collect()
+    }
+
+    /// Returns a vector of `DistroRelease`s for Debian releases that were released but no longer
+    /// supported at the given date
+    pub fn unsupported<'a>(&'a self, date: NaiveDate) -> Vec<&'a DistroRelease> {
+        self.released(date)
+            .into_iter()
+            .filter(|distro_release| !distro_release.supported_at(date))
+            .collect()
+    }
+
+    /// Returns a vector of `DistroRelease`s for Debian releases that were in development at the
+    /// given date
+    pub fn devel<'a>(&'a self, date: NaiveDate) -> Vec<&'a DistroRelease> {
+        self.all_at(date)
+            .into_iter()
+            .filter(|distro_release| match distro_release.release {
+                Some(release) => date < release,
+                None => false,
+            })
+            .collect()
+    }
+
+    /// Returns a vector of `DistroRelease`s for Debian releases that had been created at the given
+    /// date
+    pub fn all_at<'a>(&'a self, date: NaiveDate) -> Vec<&'a DistroRelease> {
+        self.releases
+            .iter()
+            .filter(|distro_release| match distro_release.created {
+                Some(created) => date >= created,
+                None => false,
+            })
+            .collect()
+    }
+
+    /// Returns a `DistroRelease` for the latest Debian release at the given date
+    pub fn latest(&self, date: NaiveDate) -> &DistroRelease {
+        // This will only be None if there are no entries in the CSV, which means things are very
+        // broken
+        self.all_at(date).last().unwrap()
+    }
+
+    pub fn iter(&self) -> ::std::slice::Iter<DistroRelease> {
+        self.releases.iter()
+    }
+}
+
+impl IntoIterator for DebianDistroInfo {
+    type Item = DistroRelease;
+    type IntoIter = ::std::vec::IntoIter<DistroRelease>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.releases.into_iter()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use chrono::naive::NaiveDate;
-    use DistroRelease;
-    use UbuntuDistroInfo;
+    use {DebianDistroInfo, DistroRelease, UbuntuDistroInfo};
 
     #[test]
     fn create_struct() {
@@ -342,8 +464,32 @@ mod tests {
     }
 
     #[test]
+    fn debian_distro_info_new() {
+        DebianDistroInfo::new().unwrap();
+        ()
+    }
+
+    #[test]
     fn ubuntu_distro_info_new() {
         UbuntuDistroInfo::new().unwrap();
+    }
+
+    #[test]
+    fn debian_distro_info_item() {
+        let distro_release = DebianDistroInfo::new().unwrap().into_iter().next().unwrap();
+        assert_eq!("1.1", distro_release.version);
+        assert_eq!("Buzz", distro_release.codename);
+        assert_eq!("buzz", distro_release.series);
+        assert_eq!(
+            Some(NaiveDate::from_ymd(1993, 8, 16)),
+            distro_release.created
+        );
+        assert_eq!(
+            Some(NaiveDate::from_ymd(1996, 6, 17)),
+            distro_release.release
+        );
+        assert_eq!(Some(NaiveDate::from_ymd(1997, 6, 5)), distro_release.eol);
+        assert_eq!(None, distro_release.eol_server);
     }
 
     #[test]
