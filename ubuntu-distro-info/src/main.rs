@@ -67,9 +67,11 @@ fn output(
             Some(target_date) => {
                 output_parts.push(format!("{}", determine_day_delta(date, target_date)));
             }
-            None => if let Some(DaysMode::EolServer) = days_mode {
-                output_parts.push("(unknown)".to_string())
-            },
+            None => {
+                if let Some(DaysMode::EolServer) = days_mode {
+                    output_parts.push("(unknown)".to_string())
+                }
+            }
         };
         if !output_parts.is_empty() {
             println!("{}", output_parts.join(" "));
