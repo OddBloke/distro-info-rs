@@ -113,6 +113,52 @@ pub trait DistroInfo {
             })
             .collect()
     }
+
+    /// Returns a vector of `DistroRelease`s for Ubuntu releases that were releasedat the given
+    /// date
+    fn released(&self, date: NaiveDate) -> Vec<&DistroRelease> {
+        self.releases()
+            .iter()
+            .filter(|distro_release| distro_release.released_at(date))
+            .collect()
+    }
+
+    /// Returns a vector of `DistroRelease`s for Ubuntu releases that were released and supported at
+    /// the given date
+    fn supported(&self, date: NaiveDate) -> Vec<&DistroRelease> {
+        self.releases()
+            .iter()
+            .filter(|distro_release| distro_release.supported_at(date))
+            .collect()
+    }
+
+    /// Returns a vector of `DistroRelease`s for Ubuntu releases that were released but no longer
+    /// supported at the given date
+    fn unsupported(&self, date: NaiveDate) -> Vec<&DistroRelease> {
+        self.released(date)
+            .into_iter()
+            .filter(|distro_release| !distro_release.supported_at(date))
+            .collect()
+    }
+
+    /// Returns a vector of `DistroRelease`s for Ubuntu releases that were in development at the
+    /// given date
+    fn devel(&self, date: NaiveDate) -> Vec<&DistroRelease> {
+        self.all_at(date)
+            .into_iter()
+            .filter(|distro_release| match distro_release.release {
+                Some(release) => date < release,
+                None => false,
+            })
+            .collect()
+    }
+
+    /// Returns a `DistroRelease` for the latest Ubuntu release at the given date
+    fn latest(&self, date: NaiveDate) -> &DistroRelease {
+        // This will only be None if there are no entries in the CSV, which means things are very
+        // broken
+        self.all_at(date).last().unwrap()
+    }
 }
 
 pub struct UbuntuDistroInfo {
@@ -178,52 +224,6 @@ impl UbuntuDistroInfo {
                 .flexible(true)
                 .from_path(UBUNTU_CSV_PATH)?,
         )
-    }
-
-    /// Returns a vector of `DistroRelease`s for Ubuntu releases that were releasedat the given
-    /// date
-    pub fn released(&self, date: NaiveDate) -> Vec<&DistroRelease> {
-        self.releases
-            .iter()
-            .filter(|distro_release| distro_release.released_at(date))
-            .collect()
-    }
-
-    /// Returns a vector of `DistroRelease`s for Ubuntu releases that were released and supported at
-    /// the given date
-    pub fn supported(&self, date: NaiveDate) -> Vec<&DistroRelease> {
-        self.releases
-            .iter()
-            .filter(|distro_release| distro_release.supported_at(date))
-            .collect()
-    }
-
-    /// Returns a vector of `DistroRelease`s for Ubuntu releases that were released but no longer
-    /// supported at the given date
-    pub fn unsupported(&self, date: NaiveDate) -> Vec<&DistroRelease> {
-        self.released(date)
-            .into_iter()
-            .filter(|distro_release| !distro_release.supported_at(date))
-            .collect()
-    }
-
-    /// Returns a vector of `DistroRelease`s for Ubuntu releases that were in development at the
-    /// given date
-    pub fn devel(&self, date: NaiveDate) -> Vec<&DistroRelease> {
-        self.all_at(date)
-            .into_iter()
-            .filter(|distro_release| match distro_release.release {
-                Some(release) => date < release,
-                None => false,
-            })
-            .collect()
-    }
-
-    /// Returns a `DistroRelease` for the latest Ubuntu release at the given date
-    pub fn latest(&self, date: NaiveDate) -> &DistroRelease {
-        // This will only be None if there are no entries in the CSV, which means things are very
-        // broken
-        self.all_at(date).last().unwrap()
     }
 
     pub fn iter(&self) -> ::std::slice::Iter<DistroRelease> {
@@ -294,52 +294,6 @@ impl DebianDistroInfo {
                 .flexible(true)
                 .from_path(DEBIAN_CSV_PATH)?,
         )
-    }
-
-    /// Returns a vector of `DistroRelease`s for Debian releases that were releasedat the given
-    /// date
-    pub fn released<'a>(&'a self, date: NaiveDate) -> Vec<&'a DistroRelease> {
-        self.releases
-            .iter()
-            .filter(|distro_release| distro_release.released_at(date))
-            .collect()
-    }
-
-    /// Returns a vector of `DistroRelease`s for Debian releases that were released and supported at
-    /// the given date
-    pub fn supported<'a>(&'a self, date: NaiveDate) -> Vec<&'a DistroRelease> {
-        self.releases
-            .iter()
-            .filter(|distro_release| distro_release.supported_at(date))
-            .collect()
-    }
-
-    /// Returns a vector of `DistroRelease`s for Debian releases that were released but no longer
-    /// supported at the given date
-    pub fn unsupported<'a>(&'a self, date: NaiveDate) -> Vec<&'a DistroRelease> {
-        self.released(date)
-            .into_iter()
-            .filter(|distro_release| !distro_release.supported_at(date))
-            .collect()
-    }
-
-    /// Returns a vector of `DistroRelease`s for Debian releases that were in development at the
-    /// given date
-    pub fn devel<'a>(&'a self, date: NaiveDate) -> Vec<&'a DistroRelease> {
-        self.all_at(date)
-            .into_iter()
-            .filter(|distro_release| match distro_release.release {
-                Some(release) => date < release,
-                None => false,
-            })
-            .collect()
-    }
-
-    /// Returns a `DistroRelease` for the latest Debian release at the given date
-    pub fn latest(&self, date: NaiveDate) -> &DistroRelease {
-        // This will only be None if there are no entries in the CSV, which means things are very
-        // broken
-        self.all_at(date).last().unwrap()
     }
 
     pub fn iter(&self) -> ::std::slice::Iter<DistroRelease> {
