@@ -103,9 +103,37 @@ impl DistroRelease {
 pub trait DistroInfo: Sized {
     fn releases(&self) -> &Vec<DistroRelease>;
     fn from_vec(releases: Vec<DistroRelease>) -> Self;
-    fn from_csv_reader<T: std::io::Read>(rdr: csv::Reader<T>) -> Result<Self, Error>;
     /// The full path to the CSV file to read from for this distro
     fn csv_path() -> &'static str;
+    /// Read records from the given CSV reader to create a Debian/UbuntuDistroInfo object
+    ///
+    /// (These records must be in the format used in debian.csv/ubuntu.csv as provided by the
+    /// distro-info-data package in Debian/Ubuntu.)
+    fn from_csv_reader<T: std::io::Read>(mut rdr: csv::Reader<T>) -> Result<Self, Error> {
+        let parse_required_str = |field: &Option<&str>| -> Result<String, Error> {
+            Ok(field
+                .ok_or(format_err!("failed to read required option"))?
+                .to_string())
+        };
+        let parse_date = |field: &str| -> Result<NaiveDate, Error> {
+            Ok(NaiveDate::parse_from_str(field, "%Y-%m-%d")?)
+        };
+
+        let mut releases = vec![];
+        for record in rdr.records() {
+            let record = record?;
+            releases.push(DistroRelease::new(
+                parse_required_str(&record.get(0))?,
+                parse_required_str(&record.get(1))?,
+                parse_required_str(&record.get(2))?,
+                record.get(3).map(parse_date).transpose()?,
+                record.get(4).map(parse_date).transpose()?,
+                record.get(5).map(parse_date).transpose()?,
+                record.get(6).map(parse_date).transpose()?,
+            ))
+        }
+        Ok(Self::from_vec(releases))
+    }
 
     /// Open this distro's CSV file and parse the release data contained therein
     fn new() -> Result<Self, Error> {
@@ -188,35 +216,6 @@ impl DistroInfo for UbuntuDistroInfo {
     fn csv_path() -> &'static str {
         UBUNTU_CSV_PATH
     }
-    /// Read records from the given CSV reader to create an UbuntuDistroInfo object
-    ///
-    /// (These records must be in the format used in ubuntu.csv as provided by the distro-info-data
-    /// package in Debian/Ubuntu.)
-    fn from_csv_reader<T: std::io::Read>(mut rdr: csv::Reader<T>) -> Result<Self, Error> {
-        let parse_required_str = |field: &Option<&str>| -> Result<String, Error> {
-            Ok(field
-                .ok_or(format_err!("failed to read required option"))?
-                .to_string())
-        };
-        let parse_date = |field: &str| -> Result<NaiveDate, Error> {
-            Ok(NaiveDate::parse_from_str(field, "%Y-%m-%d")?)
-        };
-
-        let mut releases = vec![];
-        for record in rdr.records() {
-            let record = record?;
-            releases.push(DistroRelease::new(
-                parse_required_str(&record.get(0))?,
-                parse_required_str(&record.get(1))?,
-                parse_required_str(&record.get(2))?,
-                record.get(3).map(parse_date).transpose()?,
-                record.get(4).map(parse_date).transpose()?,
-                record.get(5).map(parse_date).transpose()?,
-                record.get(6).map(parse_date).transpose()?,
-            ))
-        }
-        Ok(Self::from_vec(releases))
-    }
     /// Initialise an UbuntuDistroInfo struct from a vector of DistroReleases
     fn from_vec(releases: Vec<DistroRelease>) -> Self {
         Self { releases }
@@ -242,36 +241,6 @@ impl DistroInfo for DebianDistroInfo {
     }
     fn csv_path() -> &'static str {
         DEBIAN_CSV_PATH
-    }
-
-    /// Read records from the given CSV reader to create an UbuntuDistroInfo object
-    ///
-    /// (These records must be in the format used in debian.csv as provided by the distro-info-data
-    /// package in Debian/Ubuntu.)
-    fn from_csv_reader<T: std::io::Read>(mut rdr: csv::Reader<T>) -> Result<Self, Error> {
-        let parse_required_str = |field: &Option<&str>| -> Result<String, Error> {
-            Ok(field
-                .ok_or(format_err!("failed to read required option"))?
-                .to_string())
-        };
-        let parse_date = |field: &str| -> Result<NaiveDate, Error> {
-            Ok(NaiveDate::parse_from_str(field, "%Y-%m-%d")?)
-        };
-
-        let mut releases = vec![];
-        for record in rdr.records() {
-            let record = record?;
-            releases.push(DistroRelease::new(
-                parse_required_str(&record.get(0))?,
-                parse_required_str(&record.get(1))?,
-                parse_required_str(&record.get(2))?,
-                record.get(3).map(parse_date).transpose()?,
-                record.get(4).map(parse_date).transpose()?,
-                record.get(5).map(parse_date).transpose()?,
-                record.get(6).map(parse_date).transpose()?,
-            ))
-        }
-        Ok(Self::from_vec(releases))
     }
     /// Initialise an DebianDistroInfo struct from a vector of DistroReleases
     fn from_vec(releases: Vec<DistroRelease>) -> Self {
