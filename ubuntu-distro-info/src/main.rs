@@ -8,7 +8,7 @@ use chrono::naive::NaiveDate;
 use chrono::Datelike;
 use chrono::Utc;
 use clap::{App, Arg, ArgGroup};
-use distro_info::{DistroRelease, UbuntuDistroInfo};
+use distro_info::{DistroInfo, DistroRelease, UbuntuDistroInfo};
 use failure::{Error, ResultExt};
 
 enum DaysMode {
