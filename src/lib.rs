@@ -100,8 +100,9 @@ impl DistroRelease {
     }
 }
 
-pub trait DistroInfo {
+pub trait DistroInfo: Sized {
     fn releases(&self) -> &Vec<DistroRelease>;
+    fn from_csv_reader<T: std::io::Read>(rdr: csv::Reader<T>) -> Result<Self, Error>;
 
     /// Returns a vector of `DistroRelease`s for releases that had been created at the given date
     fn all_at<'a>(&'a self, date: NaiveDate) -> Vec<&'a DistroRelease> {
@@ -169,19 +170,11 @@ impl DistroInfo for UbuntuDistroInfo {
     fn releases(&self) -> &Vec<DistroRelease> {
         &self.releases
     }
-}
-
-/// A struct capturing the Ubuntu releases stored in `/usr/share/distro-info/ubuntu.csv`
-impl UbuntuDistroInfo {
-    /// Initialise an UbuntuDistroInfo struct from a vector of DistroReleases
-    pub fn from_vec(releases: Vec<DistroRelease>) -> Self {
-        UbuntuDistroInfo { releases }
-    }
     /// Read records from the given CSV reader to create an UbuntuDistroInfo object
     ///
     /// (These records must be in the format used in ubuntu.csv as provided by the distro-info-data
     /// package in Debian/Ubuntu.)
-    pub fn from_csv_reader<T: std::io::Read>(mut rdr: csv::Reader<T>) -> Result<Self, Error> {
+    fn from_csv_reader<T: std::io::Read>(mut rdr: csv::Reader<T>) -> Result<Self, Error> {
         let parse_required_str = |field: &Option<&str>| -> Result<String, Error> {
             Ok(field
                 .ok_or(format_err!("failed to read required option"))?
@@ -214,6 +207,14 @@ impl UbuntuDistroInfo {
             ))
         }
         Ok(Self::from_vec(releases))
+    }
+}
+
+/// A struct capturing the Ubuntu releases stored in `/usr/share/distro-info/ubuntu.csv`
+impl UbuntuDistroInfo {
+    /// Initialise an UbuntuDistroInfo struct from a vector of DistroReleases
+    pub fn from_vec(releases: Vec<DistroRelease>) -> Self {
+        UbuntuDistroInfo { releases }
     }
 
     /// Open `/usr/share/distro-info/ubuntu.csv` and parse the Ubuntu release data contained
@@ -248,19 +249,12 @@ impl DistroInfo for DebianDistroInfo {
     fn releases(&self) -> &Vec<DistroRelease> {
         &self.releases
     }
-}
 
-/// A struct capturing the Debian releases stored in `/usr/share/distro-info/debian.csv`
-impl DebianDistroInfo {
-    /// Initialise an DebianDistroInfo struct from a vector of DistroReleases
-    pub fn from_vec(releases: Vec<DistroRelease>) -> Self {
-        Self { releases }
-    }
     /// Read records from the given CSV reader to create an UbuntuDistroInfo object
     ///
     /// (These records must be in the format used in debian.csv as provided by the distro-info-data
     /// package in Debian/Ubuntu.)
-    pub fn from_csv_reader<T: std::io::Read>(mut rdr: csv::Reader<T>) -> Result<Self, Error> {
+    fn from_csv_reader<T: std::io::Read>(mut rdr: csv::Reader<T>) -> Result<Self, Error> {
         let parse_required_str = |field: &Option<&str>| -> Result<String, Error> {
             Ok(field
                 .ok_or(format_err!("failed to read required option"))?
@@ -284,6 +278,14 @@ impl DebianDistroInfo {
             ))
         }
         Ok(Self::from_vec(releases))
+    }
+}
+
+/// A struct capturing the Debian releases stored in `/usr/share/distro-info/debian.csv`
+impl DebianDistroInfo {
+    /// Initialise an DebianDistroInfo struct from a vector of DistroReleases
+    pub fn from_vec(releases: Vec<DistroRelease>) -> Self {
+        Self { releases }
     }
 
     /// Open `/usr/share/distro-info/debian.csv` and parse the Debian release data contained
