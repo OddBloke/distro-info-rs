@@ -100,8 +100,29 @@ impl DistroRelease {
     }
 }
 
+pub trait DistroInfo {
+    fn releases(&self) -> &Vec<DistroRelease>;
+
+    /// Returns a vector of `DistroRelease`s for releases that had been created at the given date
+    fn all_at<'a>(&'a self, date: NaiveDate) -> Vec<&'a DistroRelease> {
+        self.releases()
+            .iter()
+            .filter(|distro_release| match distro_release.created {
+                Some(created) => date >= created,
+                None => false,
+            })
+            .collect()
+    }
+}
+
 pub struct UbuntuDistroInfo {
     releases: Vec<DistroRelease>,
+}
+
+impl DistroInfo for UbuntuDistroInfo {
+    fn releases(&self) -> &Vec<DistroRelease> {
+        &self.releases
+    }
 }
 
 /// A struct capturing the Ubuntu releases stored in `/usr/share/distro-info/ubuntu.csv`
@@ -198,18 +219,6 @@ impl UbuntuDistroInfo {
             .collect()
     }
 
-    /// Returns a vector of `DistroRelease`s for Ubuntu releases that had been created at the given
-    /// date
-    pub fn all_at(&self, date: NaiveDate) -> Vec<&DistroRelease> {
-        self.releases
-            .iter()
-            .filter(|distro_release| match distro_release.created {
-                Some(created) => date >= created,
-                None => false,
-            })
-            .collect()
-    }
-
     /// Returns a `DistroRelease` for the latest Ubuntu release at the given date
     pub fn latest(&self, date: NaiveDate) -> &DistroRelease {
         // This will only be None if there are no entries in the CSV, which means things are very
@@ -233,6 +242,12 @@ impl IntoIterator for UbuntuDistroInfo {
 
 pub struct DebianDistroInfo {
     releases: Vec<DistroRelease>,
+}
+
+impl DistroInfo for DebianDistroInfo {
+    fn releases(&self) -> &Vec<DistroRelease> {
+        &self.releases
+    }
 }
 
 /// A struct capturing the Debian releases stored in `/usr/share/distro-info/debian.csv`
@@ -320,18 +335,6 @@ impl DebianDistroInfo {
             .collect()
     }
 
-    /// Returns a vector of `DistroRelease`s for Debian releases that had been created at the given
-    /// date
-    pub fn all_at<'a>(&'a self, date: NaiveDate) -> Vec<&'a DistroRelease> {
-        self.releases
-            .iter()
-            .filter(|distro_release| match distro_release.created {
-                Some(created) => date >= created,
-                None => false,
-            })
-            .collect()
-    }
-
     /// Returns a `DistroRelease` for the latest Debian release at the given date
     pub fn latest(&self, date: NaiveDate) -> &DistroRelease {
         // This will only be None if there are no entries in the CSV, which means things are very
@@ -356,7 +359,7 @@ impl IntoIterator for DebianDistroInfo {
 #[cfg(test)]
 mod tests {
     use chrono::naive::NaiveDate;
-    use {super::DebianDistroInfo, super::DistroRelease, super::UbuntuDistroInfo};
+    use {super::DebianDistroInfo, super::DistroInfo, super::DistroRelease, super::UbuntuDistroInfo};
 
     #[test]
     fn create_struct() {
