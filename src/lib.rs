@@ -294,16 +294,6 @@ impl DebianDistroInfo {
     pub fn from_vec(releases: Vec<DistroRelease>) -> Self {
         Self { releases }
     }
-
-    /// Open `/usr/share/distro-info/debian.csv` and parse the Debian release data contained
-    /// therein
-    pub fn new() -> Result<Self, Error> {
-        Self::from_csv_reader(
-            ReaderBuilder::new()
-                .flexible(true)
-                .from_path(DEBIAN_CSV_PATH)?,
-        )
-    }
 }
 
 impl IntoIterator for DebianDistroInfo {
