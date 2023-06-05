@@ -102,6 +102,7 @@ impl DistroRelease {
 
 pub trait DistroInfo: Sized {
     fn releases(&self) -> &Vec<DistroRelease>;
+    fn from_vec(releases: Vec<DistroRelease>) -> Self;
     fn from_csv_reader<T: std::io::Read>(rdr: csv::Reader<T>) -> Result<Self, Error>;
     /// The full path to the CSV file to read from for this distro
     fn csv_path() -> &'static str;
@@ -216,13 +217,9 @@ impl DistroInfo for UbuntuDistroInfo {
         }
         Ok(Self::from_vec(releases))
     }
-}
-
-/// A struct capturing the Ubuntu releases stored in `/usr/share/distro-info/ubuntu.csv`
-impl UbuntuDistroInfo {
     /// Initialise an UbuntuDistroInfo struct from a vector of DistroReleases
-    pub fn from_vec(releases: Vec<DistroRelease>) -> Self {
-        UbuntuDistroInfo { releases }
+    fn from_vec(releases: Vec<DistroRelease>) -> Self {
+        Self { releases }
     }
 }
 
@@ -276,12 +273,8 @@ impl DistroInfo for DebianDistroInfo {
         }
         Ok(Self::from_vec(releases))
     }
-}
-
-/// A struct capturing the Debian releases stored in `/usr/share/distro-info/debian.csv`
-impl DebianDistroInfo {
     /// Initialise an DebianDistroInfo struct from a vector of DistroReleases
-    pub fn from_vec(releases: Vec<DistroRelease>) -> Self {
+    fn from_vec(releases: Vec<DistroRelease>) -> Self {
         Self { releases }
     }
 }
