@@ -357,19 +357,19 @@ mod tests {
             version: "version".to_string(),
             codename: "codename".to_string(),
             series: "series".to_string(),
-            created: Some(NaiveDate::from_ymd(2018, 6, 14)),
-            release: Some(NaiveDate::from_ymd(2018, 6, 14)),
-            eol: Some(NaiveDate::from_ymd(2018, 6, 14)),
-            eol_server: Some(NaiveDate::from_ymd(2018, 6, 14)),
+            created: Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
+            release: Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
+            eol: Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
+            eol_server: Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
         };
     }
 
     #[test]
     fn distro_release_new() {
         let get_date = |mut n| {
-            let mut date = NaiveDate::from_ymd(2018, 6, 14);
+            let mut date = NaiveDate::from_ymd_opt(2018, 6, 14).unwrap();
             while n > 0 {
-                date = date.succ();
+                date = date.succ_opt().unwrap();
                 n -= 1;
             }
             date
@@ -406,10 +406,10 @@ mod tests {
             "98.04 LTS".to_string(),
             "codename".to_string(),
             "series".to_string(),
-            Some(NaiveDate::from_ymd(2018, 6, 14)),
-            Some(NaiveDate::from_ymd(2018, 6, 14)),
-            Some(NaiveDate::from_ymd(2018, 6, 14)),
-            Some(NaiveDate::from_ymd(2018, 6, 14)),
+            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
+            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
+            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
+            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
         );
         assert!(distro_release.is_lts());
 
@@ -417,10 +417,10 @@ mod tests {
             "98.04".to_string(),
             "codename".to_string(),
             "series".to_string(),
-            Some(NaiveDate::from_ymd(2018, 6, 14)),
-            Some(NaiveDate::from_ymd(2018, 6, 14)),
-            Some(NaiveDate::from_ymd(2018, 6, 14)),
-            Some(NaiveDate::from_ymd(2018, 6, 14)),
+            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
+            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
+            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
+            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
         );
         assert!(!distro_release.is_lts());
     }
@@ -431,17 +431,17 @@ mod tests {
             "98.04 LTS".to_string(),
             "codename".to_string(),
             "series".to_string(),
-            Some(NaiveDate::from_ymd(2018, 6, 14)),
-            Some(NaiveDate::from_ymd(2018, 6, 14)),
-            Some(NaiveDate::from_ymd(2018, 6, 16)),
-            Some(NaiveDate::from_ymd(2018, 6, 14)),
+            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
+            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
+            Some(NaiveDate::from_ymd_opt(2018, 6, 16).unwrap()),
+            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
         );
         // not released before release day
-        assert!(!distro_release.released_at(NaiveDate::from_ymd(2018, 6, 13)));
+        assert!(!distro_release.released_at(NaiveDate::from_ymd_opt(2018, 6, 13).unwrap()));
         // released on release day
-        assert!(distro_release.released_at(NaiveDate::from_ymd(2018, 6, 14)));
+        assert!(distro_release.released_at(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()));
         // still released after EOL
-        assert!(distro_release.released_at(NaiveDate::from_ymd(2018, 6, 17)));
+        assert!(distro_release.released_at(NaiveDate::from_ymd_opt(2018, 6, 17).unwrap()));
     }
 
     #[test]
@@ -450,17 +450,17 @@ mod tests {
             "98.04 LTS".to_string(),
             "codename".to_string(),
             "series".to_string(),
-            Some(NaiveDate::from_ymd(2018, 6, 14)),
-            Some(NaiveDate::from_ymd(2018, 6, 14)),
-            Some(NaiveDate::from_ymd(2018, 6, 16)),
-            Some(NaiveDate::from_ymd(2018, 6, 14)),
+            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
+            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
+            Some(NaiveDate::from_ymd_opt(2018, 6, 16).unwrap()),
+            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
         );
         // not supported before release day
-        assert!(!distro_release.supported_at(NaiveDate::from_ymd(2018, 6, 13)));
+        assert!(!distro_release.supported_at(NaiveDate::from_ymd_opt(2018, 6, 13).unwrap()));
         // supported on release day
-        assert!(distro_release.supported_at(NaiveDate::from_ymd(2018, 6, 14)));
+        assert!(distro_release.supported_at(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()));
         // not supported after EOL
-        assert!(!distro_release.supported_at(NaiveDate::from_ymd(2018, 6, 17)));
+        assert!(!distro_release.supported_at(NaiveDate::from_ymd_opt(2018, 6, 17).unwrap()));
     }
 
     #[test]
@@ -481,14 +481,17 @@ mod tests {
         assert_eq!("Buzz", distro_release.codename);
         assert_eq!("buzz", distro_release.series);
         assert_eq!(
-            Some(NaiveDate::from_ymd(1993, 8, 16)),
+            Some(NaiveDate::from_ymd_opt(1993, 8, 16).unwrap()),
             distro_release.created
         );
         assert_eq!(
-            Some(NaiveDate::from_ymd(1996, 6, 17)),
+            Some(NaiveDate::from_ymd_opt(1996, 6, 17).unwrap()),
             distro_release.release
         );
-        assert_eq!(Some(NaiveDate::from_ymd(1997, 6, 5)), distro_release.eol);
+        assert_eq!(
+            Some(NaiveDate::from_ymd_opt(1997, 6, 5).unwrap()),
+            distro_release.eol
+        );
         assert_eq!(None, distro_release.eol_server);
     }
 
@@ -499,14 +502,17 @@ mod tests {
         assert_eq!("Warty Warthog", distro_release.codename);
         assert_eq!("warty", distro_release.series);
         assert_eq!(
-            Some(NaiveDate::from_ymd(2004, 3, 5)),
+            Some(NaiveDate::from_ymd_opt(2004, 3, 5).unwrap()),
             distro_release.created
         );
         assert_eq!(
-            Some(NaiveDate::from_ymd(2004, 10, 20)),
+            Some(NaiveDate::from_ymd_opt(2004, 10, 20).unwrap()),
             distro_release.release
         );
-        assert_eq!(Some(NaiveDate::from_ymd(2006, 4, 30)), distro_release.eol);
+        assert_eq!(
+            Some(NaiveDate::from_ymd_opt(2006, 4, 30).unwrap()),
+            distro_release.eol
+        );
         assert_eq!(None, distro_release.eol_server);
     }
 
@@ -516,7 +522,7 @@ mod tests {
         for distro_release in ubuntu_distro_info {
             if distro_release.series == "dapper" {
                 assert_eq!(
-                    Some(NaiveDate::from_ymd(2011, 6, 1)),
+                    Some(NaiveDate::from_ymd_opt(2011, 6, 1).unwrap()),
                     distro_release.eol_server
                 );
                 break;
@@ -527,7 +533,7 @@ mod tests {
     fn ubuntu_distro_info_released() {
         let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
         // Use dapper's release date to confirm we don't have a boundary issue
-        let date = NaiveDate::from_ymd(2006, 6, 1);
+        let date = NaiveDate::from_ymd_opt(2006, 6, 1).unwrap();
         let released_series: Vec<String> = ubuntu_distro_info
             .released(date)
             .iter()
@@ -548,7 +554,7 @@ mod tests {
     fn ubuntu_distro_info_supported() {
         let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
         // Use bionic's release date to confirm we don't have a boundary issue
-        let date = NaiveDate::from_ymd(2018, 4, 26);
+        let date = NaiveDate::from_ymd_opt(2018, 4, 26).unwrap();
         let supported_series: Vec<String> = ubuntu_distro_info
             .supported(date)
             .iter()
@@ -569,7 +575,7 @@ mod tests {
     fn ubuntu_distro_info_unsupported() {
         let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
         // Use bionic's release date to confirm we don't have a boundary issue
-        let date = NaiveDate::from_ymd(2006, 11, 1);
+        let date = NaiveDate::from_ymd_opt(2006, 11, 1).unwrap();
         let unsupported_series: Vec<String> = ubuntu_distro_info
             .unsupported(date)
             .iter()
@@ -585,7 +591,7 @@ mod tests {
     fn ubuntu_distro_info_supported_on_eol_day() {
         let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
         // Use artful's EOL date to confirm we don't have a boundary issue
-        let date = NaiveDate::from_ymd(2018, 7, 19);
+        let date = NaiveDate::from_ymd_opt(2018, 7, 19).unwrap();
         let supported_series: Vec<String> = ubuntu_distro_info
             .supported(date)
             .iter()
@@ -605,7 +611,7 @@ mod tests {
     #[test]
     fn ubuntu_distro_info_supported_with_server_eol() {
         let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
-        let date = NaiveDate::from_ymd(2011, 5, 14);
+        let date = NaiveDate::from_ymd_opt(2011, 5, 14).unwrap();
         let supported_series: Vec<String> = ubuntu_distro_info
             .supported(date)
             .iter()
@@ -617,7 +623,7 @@ mod tests {
     #[test]
     fn ubuntu_distro_info_devel() {
         let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
-        let date = NaiveDate::from_ymd(2018, 4, 26);
+        let date = NaiveDate::from_ymd_opt(2018, 4, 26).unwrap();
         let devel_series: Vec<String> = ubuntu_distro_info
             .devel(date)
             .iter()
@@ -629,7 +635,7 @@ mod tests {
     #[test]
     fn ubuntu_distro_info_all_at() {
         let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
-        let date = NaiveDate::from_ymd(2005, 4, 8);
+        let date = NaiveDate::from_ymd_opt(2005, 4, 8).unwrap();
         let all_series: Vec<String> = ubuntu_distro_info
             .all_at(date)
             .iter()
@@ -648,7 +654,7 @@ mod tests {
     #[test]
     fn ubuntu_distro_info_latest() {
         let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
-        let date = NaiveDate::from_ymd(2005, 4, 8);
+        let date = NaiveDate::from_ymd_opt(2005, 4, 8).unwrap();
         let latest_series = ubuntu_distro_info.latest(date).series.clone();
         assert_eq!("breezy".to_string(), latest_series);
     }
