@@ -193,11 +193,14 @@ pub trait DistroInfo: Sized {
             .collect()
     }
 
-    /// Returns a `DistroRelease` for the latest release at the given date
-    fn latest(&self, date: NaiveDate) -> &DistroRelease {
-        // This will only be None if there are no entries in the CSV, which means things are very
-        // broken
-        self.all_at(date).last().unwrap()
+    /// Returns a `DistroRelease` for the latest supported, non-EOL release at the given date
+    fn latest(&self, date: NaiveDate) -> Option<&DistroRelease> {
+        self.supported(date)
+            .into_iter()
+            .filter(|distro_release| distro_release.released_at(date))
+            .collect::<Vec<_>>()
+            .last()
+            .copied()
     }
 
     fn iter(&self) -> ::std::slice::Iter<DistroRelease> {
@@ -574,8 +577,8 @@ mod tests {
     fn ubuntu_distro_info_latest() {
         let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
         let date = NaiveDate::from_ymd_opt(2005, 4, 8).unwrap();
-        let latest_series = ubuntu_distro_info.latest(date).series.clone();
-        assert_eq!("breezy".to_string(), latest_series);
+        let latest_series = ubuntu_distro_info.latest(date).unwrap().series.clone();
+        assert_eq!("hoary".to_string(), latest_series);
     }
 
     #[test]
