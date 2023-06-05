@@ -126,8 +126,7 @@ pub trait DistroInfo: Sized {
             .collect()
     }
 
-    /// Returns a vector of `DistroRelease`s for Ubuntu releases that were releasedat the given
-    /// date
+    /// Returns a vector of `DistroRelease`s for releases that were released at the given date
     fn released(&self, date: NaiveDate) -> Vec<&DistroRelease> {
         self.releases()
             .iter()
@@ -135,8 +134,8 @@ pub trait DistroInfo: Sized {
             .collect()
     }
 
-    /// Returns a vector of `DistroRelease`s for Ubuntu releases that were released and supported at
-    /// the given date
+    /// Returns a vector of `DistroRelease`s for releases that were released and supported at the
+    /// given date
     fn supported(&self, date: NaiveDate) -> Vec<&DistroRelease> {
         self.releases()
             .iter()
@@ -144,7 +143,7 @@ pub trait DistroInfo: Sized {
             .collect()
     }
 
-    /// Returns a vector of `DistroRelease`s for Ubuntu releases that were released but no longer
+    /// Returns a vector of `DistroRelease`s for releases that were released but no longer
     /// supported at the given date
     fn unsupported(&self, date: NaiveDate) -> Vec<&DistroRelease> {
         self.released(date)
@@ -153,8 +152,8 @@ pub trait DistroInfo: Sized {
             .collect()
     }
 
-    /// Returns a vector of `DistroRelease`s for Ubuntu releases that were in development at the
-    /// given date
+    /// Returns a vector of `DistroRelease`s for releases that were in development at the given
+    /// date
     fn devel(&self, date: NaiveDate) -> Vec<&DistroRelease> {
         self.all_at(date)
             .into_iter()
@@ -165,7 +164,7 @@ pub trait DistroInfo: Sized {
             .collect()
     }
 
-    /// Returns a `DistroRelease` for the latest Ubuntu release at the given date
+    /// Returns a `DistroRelease` for the latest release at the given date
     fn latest(&self, date: NaiveDate) -> &DistroRelease {
         // This will only be None if there are no entries in the CSV, which means things are very
         // broken
