@@ -171,6 +171,10 @@ pub trait DistroInfo: Sized {
         // broken
         self.all_at(date).last().unwrap()
     }
+
+    fn iter(&self) -> ::std::slice::Iter<DistroRelease> {
+        self.releases().iter()
+    }
 }
 
 pub struct UbuntuDistroInfo {
@@ -229,10 +233,6 @@ impl UbuntuDistroInfo {
     /// Initialise an UbuntuDistroInfo struct from a vector of DistroReleases
     pub fn from_vec(releases: Vec<DistroRelease>) -> Self {
         UbuntuDistroInfo { releases }
-    }
-
-    pub fn iter(&self) -> ::std::slice::Iter<DistroRelease> {
-        self.releases.iter()
     }
 }
 
@@ -303,10 +303,6 @@ impl DebianDistroInfo {
                 .flexible(true)
                 .from_path(DEBIAN_CSV_PATH)?,
         )
-    }
-
-    pub fn iter(&self) -> ::std::slice::Iter<DistroRelease> {
-        self.releases.iter()
     }
 }
 
