@@ -197,17 +197,8 @@ impl DistroInfo for UbuntuDistroInfo {
                 .ok_or(format_err!("failed to read required option"))?
                 .to_string())
         };
-        let parse_date = |field: &Option<&str>| -> Result<Option<NaiveDate>, Error> {
-            match *field {
-                Some(field) => Ok(Some(NaiveDate::parse_from_str(field, "%Y-%m-%d")?)),
-                None => Err(format_err!("unexpected error from: {:?}", field)),
-            }
-        };
-        let parse_server_eol = |field: &Option<&str>| -> Result<Option<NaiveDate>, Error> {
-            match *field {
-                Some(field) => parse_date(&Some(field)),
-                None => Ok(None),
-            }
+        let parse_date = |field: &str| -> Result<NaiveDate, Error> {
+            Ok(NaiveDate::parse_from_str(field, "%Y-%m-%d")?)
         };
 
         let mut releases = vec![];
@@ -217,10 +208,10 @@ impl DistroInfo for UbuntuDistroInfo {
                 parse_required_str(&record.get(0))?,
                 parse_required_str(&record.get(1))?,
                 parse_required_str(&record.get(2))?,
-                parse_date(&record.get(3))?,
-                parse_date(&record.get(4))?,
-                parse_date(&record.get(5))?,
-                parse_server_eol(&record.get(6))?,
+                record.get(3).map(parse_date).transpose()?,
+                record.get(4).map(parse_date).transpose()?,
+                record.get(5).map(parse_date).transpose()?,
+                record.get(6).map(parse_date).transpose()?,
             ))
         }
         Ok(Self::from_vec(releases))
@@ -478,12 +469,16 @@ mod tests {
     fn ubuntu_distro_info_eol_server() {
         let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
         for distro_release in ubuntu_distro_info {
-            if distro_release.series == "dapper" {
-                assert_eq!(
-                    Some(NaiveDate::from_ymd_opt(2011, 6, 1).unwrap()),
-                    distro_release.eol_server
-                );
-                break;
+            match distro_release.series.as_ref() {
+                "breezy" => assert_eq!(None, distro_release.eol_server),
+                "dapper" => {
+                    assert_eq!(
+                        Some(NaiveDate::from_ymd_opt(2011, 6, 1).unwrap()),
+                        distro_release.eol_server
+                    );
+                    break;
+                }
+                _ => {}
             }
         }
     }
