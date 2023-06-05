@@ -25,6 +25,9 @@ enum OutputMode {
     Suppress,
 }
 
+const OUTDATED_MSG: &str = "Distribution data outdated.
+Please check for an update for distro-info-data. See /usr/share/doc/distro-info-data/README.Debian for details.";
+
 fn determine_day_delta(current_date: NaiveDate, target_date: NaiveDate) -> i64 {
     target_date.signed_duration_since(current_date).num_days()
 }
@@ -35,6 +38,9 @@ fn output(
     days_mode: &Option<DaysMode>,
     date: NaiveDate,
 ) -> Result<(), Error> {
+    if distro_releases.len() == 0 {
+        bail!(OUTDATED_MSG);
+    }
     for distro_release in distro_releases {
         let mut output_parts = vec![];
         match output_mode {
