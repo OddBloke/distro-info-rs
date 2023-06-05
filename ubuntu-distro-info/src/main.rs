@@ -202,7 +202,15 @@ fn run() -> Result<(), Error> {
     } else if matches.is_present("devel") {
         ubuntu_distro_info.devel(date)
     } else if matches.is_present("latest") {
-        vec![ubuntu_distro_info.latest(date)]
+        let devel_result = ubuntu_distro_info.devel(date);
+        if devel_result.len() > 0 {
+            vec![*devel_result.last().unwrap()]
+        } else {
+        ubuntu_distro_info
+            .latest(date)
+            .map(|distro_release| vec![distro_release])
+            .unwrap_or_else(|| vec![])
+        }
     } else if matches.is_present("lts") {
         let mut lts_releases = vec![];
         for distro_release in ubuntu_distro_info.all_at(date) {
