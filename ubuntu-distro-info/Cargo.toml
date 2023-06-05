@@ -1,5 +1,6 @@
 [package]
 name = "ubuntu-distro-info"
+edition = "2021"
 description = "Utility for parsing Ubuntu distro-info-data"
 version = "0.3.0"
 authors = ["Daniel Watkins <daniel@daniel-watkins.co.uk>"]

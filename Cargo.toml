@@ -1,5 +1,6 @@
 [package]
 name = "distro-info"
+edition = "2021"
 description = "Library for parsing Debian/Ubuntu distro-info-data"
 version = "0.3.0"
 authors = ["Daniel Watkins <daniel@daniel-watkins.co.uk>"]
