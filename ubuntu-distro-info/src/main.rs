@@ -209,7 +209,10 @@ fn run() -> Result<(), Error> {
             None => bail!("No matching release found"),
         }
     } else if matches.is_present("stable") {
-        vec![*ubuntu_distro_info.supported(date).last().unwrap()]
+        ubuntu_distro_info
+            .latest(date)
+            .map(|distro_release| vec![distro_release])
+            .unwrap_or_else(|| vec![])
     } else if matches.is_present("series") {
         match matches.value_of("series") {
             Some(needle_series) => {
