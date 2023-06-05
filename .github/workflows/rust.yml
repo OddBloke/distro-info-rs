@@ -16,7 +16,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Build
+
+    - name: distro-info-rs: Build
       run: cargo build --verbose
-    - name: Run tests
+    - name: distro-info-rs: Run tests
       run: cargo test --verbose
+
+    - name: ubuntu-distro-info: Build
+      run: cd ubuntu-distro-info && cargo build --verbose
+    - name: ubuntu-distro-info: Run tests
+      run: cd ubuntu-distro-info && cargo test --verbose
