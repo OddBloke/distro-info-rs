@@ -260,7 +260,9 @@ impl IntoIterator for DebianDistroInfo {
 #[cfg(test)]
 mod tests {
     use chrono::naive::NaiveDate;
-    use {super::DebianDistroInfo, super::DistroInfo, super::DistroRelease, super::UbuntuDistroInfo};
+    use {
+        super::DebianDistroInfo, super::DistroInfo, super::DistroRelease, super::UbuntuDistroInfo,
+    };
 
     #[test]
     fn create_struct() {
