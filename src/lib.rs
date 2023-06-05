@@ -103,6 +103,17 @@ impl DistroRelease {
 pub trait DistroInfo: Sized {
     fn releases(&self) -> &Vec<DistroRelease>;
     fn from_csv_reader<T: std::io::Read>(rdr: csv::Reader<T>) -> Result<Self, Error>;
+    /// The full path to the CSV file to read from for this distro
+    fn csv_path() -> &'static str;
+
+    /// Open this distro's CSV file and parse the release data contained therein
+    fn new() -> Result<Self, Error> {
+        Self::from_csv_reader(
+            ReaderBuilder::new()
+                .flexible(true)
+                .from_path(Self::csv_path())?,
+        )
+    }
 
     /// Returns a vector of `DistroRelease`s for releases that had been created at the given date
     fn all_at<'a>(&'a self, date: NaiveDate) -> Vec<&'a DistroRelease> {
@@ -170,6 +181,9 @@ impl DistroInfo for UbuntuDistroInfo {
     fn releases(&self) -> &Vec<DistroRelease> {
         &self.releases
     }
+    fn csv_path() -> &'static str {
+        UBUNTU_CSV_PATH
+    }
     /// Read records from the given CSV reader to create an UbuntuDistroInfo object
     ///
     /// (These records must be in the format used in ubuntu.csv as provided by the distro-info-data
@@ -217,16 +231,6 @@ impl UbuntuDistroInfo {
         UbuntuDistroInfo { releases }
     }
 
-    /// Open `/usr/share/distro-info/ubuntu.csv` and parse the Ubuntu release data contained
-    /// therein
-    pub fn new() -> Result<Self, Error> {
-        Self::from_csv_reader(
-            ReaderBuilder::new()
-                .flexible(true)
-                .from_path(UBUNTU_CSV_PATH)?,
-        )
-    }
-
     pub fn iter(&self) -> ::std::slice::Iter<DistroRelease> {
         self.releases.iter()
     }
@@ -248,6 +252,9 @@ pub struct DebianDistroInfo {
 impl DistroInfo for DebianDistroInfo {
     fn releases(&self) -> &Vec<DistroRelease> {
         &self.releases
+    }
+    fn csv_path() -> &'static str {
+        DEBIAN_CSV_PATH
     }
 
     /// Read records from the given CSV reader to create an UbuntuDistroInfo object
