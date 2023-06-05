@@ -212,7 +212,7 @@ fn run() -> Result<(), Error> {
         }
         match lts_releases.last() {
             Some(release) => vec![*release],
-            None => bail!("No matching release found"),
+            None => bail!(OUTDATED_MSG),
         }
     } else if matches.is_present("stable") {
         ubuntu_distro_info
