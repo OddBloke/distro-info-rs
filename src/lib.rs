@@ -74,6 +74,13 @@ impl DistroRelease {
         self.version.contains("LTS")
     }
 
+    pub fn created_at(&self, date: NaiveDate) -> bool {
+        match self.created {
+            Some(created) => date >= created,
+            None => false,
+        }
+    }
+
     pub fn released_at(&self, date: NaiveDate) -> bool {
         match self.release {
             Some(release) => date >= release,
@@ -82,7 +89,7 @@ impl DistroRelease {
     }
 
     pub fn supported_at(&self, date: NaiveDate) -> bool {
-        self.released_at(date)
+        self.created_at(date)
             && match self.eol {
                 Some(eol) => match self.eol_server {
                     Some(eol_server) => date <= ::std::cmp::max(eol, eol_server),
@@ -164,8 +171,8 @@ impl UbuntuDistroInfo {
     /// Returns a vector of `DistroRelease`s for Ubuntu releases that were released and supported at
     /// the given date
     pub fn supported(&self, date: NaiveDate) -> Vec<&DistroRelease> {
-        self.released(date)
-            .into_iter()
+        self.releases
+            .iter()
             .filter(|distro_release| distro_release.supported_at(date))
             .collect()
     }
@@ -286,8 +293,8 @@ impl DebianDistroInfo {
     /// Returns a vector of `DistroRelease`s for Debian releases that were released and supported at
     /// the given date
     pub fn supported<'a>(&'a self, date: NaiveDate) -> Vec<&'a DistroRelease> {
-        self.released(date)
-            .into_iter()
+        self.releases
+            .iter()
             .filter(|distro_release| distro_release.supported_at(date))
             .collect()
     }
@@ -566,6 +573,7 @@ mod tests {
                 "xenial".to_string(),
                 "artful".to_string(),
                 "bionic".to_string(),
+                "cosmic".to_string(),
             ],
             supported_series
         );
@@ -603,6 +611,7 @@ mod tests {
                 "xenial".to_string(),
                 "artful".to_string(),
                 "bionic".to_string(),
+                "cosmic".to_string(),
             ],
             supported_series
         );
