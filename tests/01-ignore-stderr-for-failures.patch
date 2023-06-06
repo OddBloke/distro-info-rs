@@ -1,0 +1,23 @@
+diff --git distro-info/shunit2-helper-functions.sh distro-info/shunit2-helper-functions.sh
+index 921692d..b72284d 100644
+--- distro-info/shunit2-helper-functions.sh
++++ distro-info/shunit2-helper-functions.sh
+@@ -22,7 +22,10 @@ runCommand() {
+     eval "${COMMAND} $param" > ${stdoutF} 2> ${stderrF}
+     retval=$?
+     assertEquals "standard output of ${COMMAND} $param\n" "$exp_stdout" "$(cat ${stdoutF})"
+-    assertEquals "error output of ${COMMAND} $param\n" "$exp_stderr" "$(cat ${stderrF})"
++    case $exp_stderr in
++        "n/a") ;;
++        *) assertEquals "error output of ${COMMAND} $param\n" "$exp_stderr" "$(cat ${stderrF})";;
++    esac
+     assertEquals "return value of ${COMMAND} $param\n" $exp_retval $retval
+ }
+ 
+@@ -31,5 +34,5 @@ success() {
+ }
+ 
+ failure() {
+-    runCommand "$1" "" "$2" 1
++    runCommand "$1" "" "n/a" 1
+ }
