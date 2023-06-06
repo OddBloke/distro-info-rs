@@ -91,9 +91,9 @@ fn today() -> NaiveDate {
     NaiveDate::from_ymd(now.year(), now.month(), now.day())
 }
 
-fn run() -> Result<(), Error> {
-    let matches = App::new("ubuntu-distro-info")
-        .version("0.1.0")
+/// Add arguments common to both ubuntu- and debian-distro-info to `app`
+fn add_common_args<'a>(app: App<'a, 'a>) -> App<'a, 'a> {
+    app.version("0.1.0")
         .author("Daniel Watkins <daniel@daniel-watkins.co.uk>")
         .arg(
             Arg::with_name("all")
@@ -106,12 +106,6 @@ fn run() -> Result<(), Error> {
                 .short("d")
                 .long("devel")
                 .help("latest development version"),
-        )
-        .arg(Arg::with_name("latest").short("l").long("latest"))
-        .arg(
-            Arg::with_name("lts")
-                .long("lts")
-                .help("latest long term support (LTS) version"),
         )
         .arg(
             Arg::with_name("series")
@@ -184,7 +178,17 @@ fn run() -> Result<(), Error> {
                 .required(true),
         )
         .group(ArgGroup::with_name("output").args(&["codename", "fullname", "release"]))
-        .get_matches();
+}
+
+fn run() -> Result<(), Error> {
+    let app = add_common_args(App::new("ubuntu-distro-info"))
+        .arg(Arg::with_name("latest").short("l").long("latest"))
+        .arg(
+            Arg::with_name("lts")
+                .long("lts")
+                .help("latest long term support (LTS) version"),
+        );
+    let matches = app.get_matches();
     let ubuntu_distro_info = UbuntuDistroInfo::new()?;
     let date = match matches.value_of("date") {
         Some(date_str) => NaiveDate::parse_from_str(date_str, "%Y-%m-%d").context(format!(
