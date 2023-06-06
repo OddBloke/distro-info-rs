@@ -16,13 +16,17 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: true
 
     - name: "distro-info-rs: Build"
       run: cargo build --verbose
-    - name: "distro-info-rs: Run tests"
+    - name: "distro-info-rs: Run cargo test"
       run: cargo test --verbose
 
     - name: "ubuntu-distro-info: Build"
       run: cd ubuntu-distro-info && cargo build --verbose
-    - name: "ubuntu-distro-info: Run tests"
+    - name: "ubuntu-distro-info: Run cargo test"
       run: cd ubuntu-distro-info && cargo test --verbose
+    - name: "ubuntu-distro-info: Upstream tests"
+      run: cd tests && make ci-install-deps && make test
