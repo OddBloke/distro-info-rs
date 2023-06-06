@@ -1,5 +1,8 @@
 tests_dir := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
+ci-install-deps:
+	sudo apt-get install -qqy shunit2
+
 apply:
 	cat $(wildcard *.patch) | patch -p0
 
