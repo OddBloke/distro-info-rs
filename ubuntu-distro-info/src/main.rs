@@ -210,10 +210,10 @@ fn run() -> Result<(), Error> {
         if devel_result.len() > 0 {
             vec![*devel_result.last().unwrap()]
         } else {
-        ubuntu_distro_info
-            .latest(date)
-            .map(|distro_release| vec![distro_release])
-            .unwrap_or_else(|| vec![])
+            ubuntu_distro_info
+                .latest(date)
+                .map(|distro_release| vec![distro_release])
+                .unwrap_or_else(|| vec![])
         }
     } else if matches.is_present("lts") {
         let mut lts_releases = vec![];
