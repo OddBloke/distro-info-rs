@@ -24,9 +24,9 @@ jobs:
     - name: "distro-info-rs: Run cargo test"
       run: cargo test --verbose
 
-    - name: "ubuntu-distro-info: Build"
-      run: cd ubuntu-distro-info && cargo build --verbose
-    - name: "ubuntu-distro-info: Run cargo test"
-      run: cd ubuntu-distro-info && cargo test --verbose
+    - name: "binaries: Build"
+      run: cd binaries && cargo build --verbose
+    - name: "binaries: Run cargo test"
+      run: cd binaries && cargo test --verbose
     - name: "ubuntu-distro-info: Upstream tests"
       run: cd tests && make ci-install-deps && make test
