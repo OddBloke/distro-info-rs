@@ -9,7 +9,7 @@ homepage = "https://github.com/OddBloke/distro-info-rs/tree/master"
 
 [workspace]
 members = [
-    "ubuntu-distro-info",
+    "binaries",
 ]
 
 [dependencies]

@@ -6,7 +6,7 @@ extern crate failure;
 use clap::{App, Arg};
 use distro_info::{DistroInfo, UbuntuDistroInfo};
 use failure::Error;
-use ubuntu_distro_info::{add_common_args, common_run};
+use distro_info_binaries::{add_common_args, common_run};
 
 fn run() -> Result<(), Error> {
     let app = add_common_args(App::new("ubuntu-distro-info"))

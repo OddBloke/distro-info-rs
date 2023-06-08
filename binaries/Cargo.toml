@@ -1,11 +1,11 @@
 [package]
-name = "ubuntu-distro-info"
+name = "distro-info-binaries"
 edition = "2021"
-description = "Utility for parsing Ubuntu distro-info-data"
+description = "Utilities for parsing distro-info-data"
 version = "0.3.0"
 authors = ["Daniel Watkins <daniel@daniel-watkins.co.uk>"]
 license = "GPL-3.0"
-homepage = "https://github.com/OddBloke/distro-info-rs/tree/master/ubuntu-distro-info"
+homepage = "https://github.com/OddBloke/distro-info-rs/tree/master/binaries"
 
 [dependencies]
 distro-info = { path = "../" }
