@@ -131,18 +131,27 @@ pub fn common_run(matches: &ArgMatches, distro_info: &impl DistroInfo) -> Result
             _ => panic!("unknown days mode found; please report a bug"),
         })
     };
+    let distro_name = distro_info.distro_name();
     if matches.is_present("fullname") {
         output(
+            distro_name,
             distro_releases_iter,
             &OutputMode::FullName,
             &days_mode,
             date,
         )?;
     } else if matches.is_present("release") {
-        output(distro_releases_iter, &OutputMode::Release, &days_mode, date)?;
+        output(
+            distro_name,
+            distro_releases_iter,
+            &OutputMode::Release,
+            &days_mode,
+            date,
+        )?;
     } else if matches.is_present("codename") || days_mode.is_none() {
         // This should be the default output _unless_ --days is specified
         output(
+            distro_name,
             distro_releases_iter,
             &OutputMode::Codename,
             &days_mode,
@@ -150,6 +159,7 @@ pub fn common_run(matches: &ArgMatches, distro_info: &impl DistroInfo) -> Result
         )?;
     } else {
         output(
+            distro_name,
             distro_releases_iter,
             &OutputMode::Suppress,
             &days_mode,
@@ -164,6 +174,7 @@ fn determine_day_delta(current_date: NaiveDate, target_date: NaiveDate) -> i64 {
 }
 
 pub fn output(
+    distro_name: &str,
     distro_releases: Vec<&DistroRelease>,
     output_mode: &OutputMode,
     days_mode: &Option<DaysMode>,
@@ -178,7 +189,8 @@ pub fn output(
             OutputMode::Codename => output_parts.push(distro_release.series().to_string()),
             OutputMode::Release => output_parts.push(distro_release.version().to_string()),
             OutputMode::FullName => output_parts.push(format!(
-                "Ubuntu {} \"{}\"",
+                "{} {} \"{}\"",
+                distro_name,
                 &distro_release.version(),
                 &distro_release.codename()
             )),
