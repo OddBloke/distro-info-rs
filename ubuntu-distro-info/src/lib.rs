@@ -6,6 +6,20 @@ use failure::{bail, format_err, Error};
 pub const OUTDATED_MSG: &str = "Distribution data outdated.
 Please check for an update for distro-info-data. See /usr/share/doc/distro-info-data/README.Debian for details.";
 
+pub enum DaysMode {
+    Created,
+    Eol,
+    EolServer,
+    Release,
+}
+
+pub enum OutputMode {
+    Codename,
+    FullName,
+    Release,
+    Suppress,
+}
+
 /// Add arguments common to both ubuntu- and debian-distro-info to `app`
 pub fn add_common_args<'a>(app: App<'a, 'a>) -> App<'a, 'a> {
     app.version("0.1.0")
@@ -93,6 +107,64 @@ pub fn add_common_args<'a>(app: App<'a, 'a>) -> App<'a, 'a> {
                 .required(true),
         )
         .group(ArgGroup::with_name("output").args(&["codename", "fullname", "release"]))
+}
+
+fn determine_day_delta(current_date: NaiveDate, target_date: NaiveDate) -> i64 {
+    target_date.signed_duration_since(current_date).num_days()
+}
+
+pub fn output(
+    distro_releases: Vec<&DistroRelease>,
+    output_mode: &OutputMode,
+    days_mode: &Option<DaysMode>,
+    date: NaiveDate,
+) -> Result<(), Error> {
+    if distro_releases.len() == 0 {
+        bail!(OUTDATED_MSG);
+    }
+    for distro_release in distro_releases {
+        let mut output_parts = vec![];
+        match output_mode {
+            OutputMode::Codename => output_parts.push(distro_release.series().to_string()),
+            OutputMode::Release => output_parts.push(distro_release.version().to_string()),
+            OutputMode::FullName => output_parts.push(format!(
+                "Ubuntu {} \"{}\"",
+                &distro_release.version(),
+                &distro_release.codename()
+            )),
+            OutputMode::Suppress => (),
+        }
+        let target_date = match days_mode {
+            Some(DaysMode::Created) => Some(distro_release.created().ok_or(format_err!(
+                "No creation date found for {}",
+                &distro_release.series()
+            ))?),
+            Some(DaysMode::Eol) => Some(distro_release.eol().ok_or(format_err!(
+                "No EOL date found for {}",
+                &distro_release.series()
+            ))?),
+            Some(DaysMode::EolServer) => *distro_release.eol_server(),
+            Some(DaysMode::Release) => Some(distro_release.release().ok_or(format_err!(
+                "No release date found for {}",
+                &distro_release.series()
+            ))?),
+            None => None,
+        };
+        match target_date {
+            Some(target_date) => {
+                output_parts.push(format!("{}", determine_day_delta(date, target_date)));
+            }
+            None => {
+                if let Some(DaysMode::EolServer) = days_mode {
+                    output_parts.push("(unknown)".to_string())
+                }
+            }
+        };
+        if !output_parts.is_empty() {
+            println!("{}", output_parts.join(" "));
+        }
+    }
+    Ok(())
 }
 
 pub fn select_distro_releases<'a>(
