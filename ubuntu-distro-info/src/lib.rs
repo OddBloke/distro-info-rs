@@ -1,4 +1,10 @@
-use clap::{App, Arg, ArgGroup};
+use chrono::NaiveDate;
+use clap::{App, Arg, ArgGroup, ArgMatches};
+use distro_info::{DistroInfo, DistroRelease};
+use failure::{bail, format_err, Error};
+
+pub const OUTDATED_MSG: &str = "Distribution data outdated.
+Please check for an update for distro-info-data. See /usr/share/doc/distro-info-data/README.Debian for details.";
 
 /// Add arguments common to both ubuntu- and debian-distro-info to `app`
 pub fn add_common_args<'a>(app: App<'a, 'a>) -> App<'a, 'a> {
@@ -87,4 +93,68 @@ pub fn add_common_args<'a>(app: App<'a, 'a>) -> App<'a, 'a> {
                 .required(true),
         )
         .group(ArgGroup::with_name("output").args(&["codename", "fullname", "release"]))
+}
+
+pub fn select_distro_releases<'a>(
+    matches: &ArgMatches,
+    date: NaiveDate,
+    distro_info: &'a impl DistroInfo,
+) -> Result<Vec<&'a DistroRelease>, Error> {
+    Ok(if matches.is_present("all") {
+        distro_info.iter().collect()
+    } else if matches.is_present("supported") {
+        distro_info.supported(date)
+    } else if matches.is_present("unsupported") {
+        distro_info.unsupported(date)
+    } else if matches.is_present("devel") {
+        distro_info.devel(date)
+    } else if matches.is_present("latest") {
+        let devel_result = distro_info.devel(date);
+        if devel_result.len() > 0 {
+            vec![*devel_result.last().unwrap()]
+        } else {
+            distro_info
+                .latest(date)
+                .map(|distro_release| vec![distro_release])
+                .unwrap_or_else(|| vec![])
+        }
+    } else if matches.is_present("lts") {
+        let mut lts_releases = vec![];
+        for distro_release in distro_info.all_at(date) {
+            if distro_release.is_lts() {
+                lts_releases.push(distro_release);
+            }
+        }
+        match lts_releases.last() {
+            Some(release) => vec![*release],
+            None => bail!(OUTDATED_MSG),
+        }
+    } else if matches.is_present("stable") {
+        distro_info
+            .latest(date)
+            .map(|distro_release| vec![distro_release])
+            .unwrap_or_else(|| vec![])
+    } else if matches.is_present("series") {
+        match matches.value_of("series") {
+            Some(needle_series) => {
+                if !needle_series.chars().all(|c| c.is_lowercase()) {
+                    bail!("invalid distribution series `{}'", needle_series);
+                };
+                let candidates: Vec<&DistroRelease> = distro_info
+                    .iter()
+                    .filter(|distro_release| distro_release.series() == needle_series)
+                    .collect();
+                if candidates.is_empty() {
+                    bail!("unknown distribution series `{}'", needle_series);
+                };
+                Ok(candidates)
+            }
+            None => Err(format_err!(
+                "--series requires an argument; please report a bug about this \
+                 error"
+            )),
+        }?
+    } else {
+        panic!("clap prevent us from reaching here; report a bug if you see this")
+    })
 }
