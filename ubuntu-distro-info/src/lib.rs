@@ -1,7 +1,9 @@
+use chrono::Datelike;
 use chrono::NaiveDate;
+use chrono::Utc;
 use clap::{App, Arg, ArgGroup, ArgMatches};
 use distro_info::{DistroInfo, DistroRelease};
-use failure::{bail, format_err, Error};
+use failure::{bail, format_err, Error, ResultExt};
 
 pub const OUTDATED_MSG: &str = "Distribution data outdated.
 Please check for an update for distro-info-data. See /usr/share/doc/distro-info-data/README.Debian for details.";
@@ -107,6 +109,54 @@ pub fn add_common_args<'a>(app: App<'a, 'a>) -> App<'a, 'a> {
                 .required(true),
         )
         .group(ArgGroup::with_name("output").args(&["codename", "fullname", "release"]))
+}
+
+pub fn common_run(matches: &ArgMatches, distro_info: &impl DistroInfo) -> Result<(), Error> {
+    let date = match matches.value_of("date") {
+        Some(date_str) => NaiveDate::parse_from_str(date_str, "%Y-%m-%d").context(format!(
+            "Failed to parse date '{}'; must be YYYY-MM-DD format",
+            date_str
+        ))?,
+        None => today(),
+    };
+    let distro_releases_iter = select_distro_releases(&matches, date, distro_info)?;
+    let days_mode = if matches.occurrences_of("days") == 0 {
+        None
+    } else {
+        matches.value_of("days").map(|value| match value {
+            "created" => DaysMode::Created,
+            "eol" => DaysMode::Eol,
+            "eol-server" => DaysMode::EolServer,
+            "release" => DaysMode::Release,
+            _ => panic!("unknown days mode found; please report a bug"),
+        })
+    };
+    if matches.is_present("fullname") {
+        output(
+            distro_releases_iter,
+            &OutputMode::FullName,
+            &days_mode,
+            date,
+        )?;
+    } else if matches.is_present("release") {
+        output(distro_releases_iter, &OutputMode::Release, &days_mode, date)?;
+    } else if matches.is_present("codename") || days_mode.is_none() {
+        // This should be the default output _unless_ --days is specified
+        output(
+            distro_releases_iter,
+            &OutputMode::Codename,
+            &days_mode,
+            date,
+        )?;
+    } else {
+        output(
+            distro_releases_iter,
+            &OutputMode::Suppress,
+            &days_mode,
+            date,
+        )?;
+    }
+    Ok(())
 }
 
 fn determine_day_delta(current_date: NaiveDate, target_date: NaiveDate) -> i64 {
@@ -229,4 +279,9 @@ pub fn select_distro_releases<'a>(
     } else {
         panic!("clap prevent us from reaching here; report a bug if you see this")
     })
+}
+
+fn today() -> NaiveDate {
+    let now = Utc::now();
+    NaiveDate::from_ymd(now.year(), now.month(), now.day())
 }
