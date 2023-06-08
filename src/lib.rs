@@ -15,6 +15,20 @@ use failure::Error;
 const UBUNTU_CSV_PATH: &str = "/usr/share/distro-info/ubuntu.csv";
 const DEBIAN_CSV_PATH: &str = "/usr/share/distro-info/debian.csv";
 
+pub enum Distro {
+    Debian,
+    Ubuntu,
+}
+
+impl Distro {
+    pub fn to_string(&self) -> &'static str {
+        match self {
+            Distro::Ubuntu => "Ubuntu",
+            Distro::Debian => "Debian",
+        }
+    }
+}
+
 pub struct DistroRelease {
     version: String,
     codename: String,
@@ -101,7 +115,7 @@ impl DistroRelease {
 }
 
 pub trait DistroInfo: Sized {
-    fn distro_name(&self) -> &'static str;
+    fn distro(&self) -> &Distro;
     fn releases(&self) -> &Vec<DistroRelease>;
     fn from_vec(releases: Vec<DistroRelease>) -> Self;
     /// The full path to the CSV file to read from for this distro
@@ -214,8 +228,8 @@ pub struct UbuntuDistroInfo {
 }
 
 impl DistroInfo for UbuntuDistroInfo {
-    fn distro_name(&self) -> &'static str {
-        "Ubuntu"
+    fn distro(&self) -> &Distro {
+        &Distro::Ubuntu
     }
     fn releases(&self) -> &Vec<DistroRelease> {
         &self.releases
@@ -243,8 +257,8 @@ pub struct DebianDistroInfo {
 }
 
 impl DistroInfo for DebianDistroInfo {
-    fn distro_name(&self) -> &'static str {
-        "Debian"
+    fn distro(&self) -> &Distro {
+        &Distro::Debian
     }
     fn releases(&self) -> &Vec<DistroRelease> {
         &self.releases

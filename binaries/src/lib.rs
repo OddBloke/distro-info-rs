@@ -131,7 +131,7 @@ pub fn common_run(matches: &ArgMatches, distro_info: &impl DistroInfo) -> Result
             _ => panic!("unknown days mode found; please report a bug"),
         })
     };
-    let distro_name = distro_info.distro_name();
+    let distro_name = distro_info.distro().to_string();
     if matches.is_present("fullname") {
         output(
             distro_name,
