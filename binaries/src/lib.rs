@@ -23,7 +23,16 @@ pub enum OutputMode {
 }
 
 /// Add arguments common to both ubuntu- and debian-distro-info to `app`
-pub fn add_common_args<'a>(app: App<'a, 'a>) -> App<'a, 'a> {
+pub fn add_common_args<'a>(app: App<'a, 'a>, additional_selectors: &'a [&str]) -> App<'a, 'a> {
+    let mut selectors = vec![
+        "all",
+        "devel",
+        "series",
+        "stable",
+        "supported",
+        "unsupported",
+    ];
+    selectors.extend(additional_selectors);
     app.version("0.1.0")
         .author("Daniel Watkins <daniel@daniel-watkins.co.uk>")
         .arg(
@@ -96,16 +105,7 @@ pub fn add_common_args<'a>(app: App<'a, 'a>) -> App<'a, 'a> {
         )
         .group(
             ArgGroup::with_name("selector")
-                .args(&[
-                    "all",
-                    "devel",
-                    "latest",
-                    "lts",
-                    "series",
-                    "stable",
-                    "supported",
-                    "unsupported",
-                ])
+                .args(&selectors)
                 .required(true),
         )
         .group(ArgGroup::with_name("output").args(&["codename", "fullname", "release"]))

@@ -5,11 +5,12 @@ extern crate failure;
 
 use clap::{App, Arg};
 use distro_info::{DistroInfo, UbuntuDistroInfo};
-use failure::Error;
 use distro_info_binaries::{add_common_args, common_run};
+use failure::Error;
 
 fn run() -> Result<(), Error> {
-    let app = add_common_args(App::new("ubuntu-distro-info"))
+    let additional_selectors = &["latest", "lts"];
+    let app = add_common_args(App::new("ubuntu-distro-info"), additional_selectors)
         .arg(Arg::with_name("latest").short("l").long("latest"))
         .arg(
             Arg::with_name("lts")
