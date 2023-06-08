@@ -109,7 +109,7 @@ impl DistroRelease {
                     Some(eol_server) => date <= ::std::cmp::max(eol, eol_server),
                     None => date <= eol,
                 },
-                None => false,
+                None => true,
             }
     }
 }
