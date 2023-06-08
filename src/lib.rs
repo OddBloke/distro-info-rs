@@ -198,7 +198,7 @@ pub trait DistroInfo: Sized {
 
     /// Returns a vector of `DistroRelease`s for releases that were in development at the given
     /// date
-    fn devel(&self, date: NaiveDate) -> Vec<&DistroRelease> {
+    fn ubuntu_devel(&self, date: NaiveDate) -> Vec<&DistroRelease> {
         self.all_at(date)
             .into_iter()
             .filter(|distro_release| match distro_release.release {
@@ -206,6 +206,23 @@ pub trait DistroInfo: Sized {
                 None => false,
             })
             .collect()
+    }
+
+    /// Returns a vector of `DistroRelease`s for releases that were in development at the given
+    /// date
+    fn debian_devel(&self, date: NaiveDate) -> Vec<&DistroRelease> {
+        self.all_at(date)
+            .into_iter()
+            .filter(|distro_release| match distro_release.release {
+                Some(release) => date < release,
+                None => true,
+            })
+            .filter(|distro_release| distro_release.version == "")
+            .collect::<Vec<_>>()
+            .first()
+            .copied()
+            .map(|dr| vec![dr])
+            .unwrap_or_else(|| vec![])
     }
 
     /// Returns a `DistroRelease` for the latest supported, non-EOL release at the given date
@@ -568,7 +585,7 @@ mod tests {
         let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
         let date = NaiveDate::from_ymd_opt(2018, 4, 26).unwrap();
         let devel_series: Vec<String> = ubuntu_distro_info
-            .devel(date)
+            .ubuntu_devel(date)
             .iter()
             .map(|distro_release| distro_release.series.clone())
             .collect();
