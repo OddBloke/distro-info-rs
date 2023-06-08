@@ -30,7 +30,7 @@ impl Distro {
 }
 
 pub struct DistroRelease {
-    version: String,
+    version: Option<String>,
     codename: String,
     series: String,
     created: Option<NaiveDate>,
@@ -50,7 +50,7 @@ impl DistroRelease {
         eol_server: Option<NaiveDate>,
     ) -> Self {
         Self {
-            version,
+            version: if version == "" { None } else { Some(version) },
             codename,
             series,
             created,
@@ -61,7 +61,7 @@ impl DistroRelease {
     }
 
     // Getters
-    pub fn version(&self) -> &String {
+    pub fn version(&self) -> &Option<String> {
         &self.version
     }
     pub fn codename(&self) -> &String {
@@ -85,7 +85,10 @@ impl DistroRelease {
 
     // Non-getters
     pub fn is_lts(&self) -> bool {
-        self.version.contains("LTS")
+        self.version
+            .as_ref()
+            .map(|version| version.contains("LTS"))
+            .unwrap_or(false)
     }
 
     pub fn created_at(&self, date: NaiveDate) -> bool {
@@ -217,7 +220,7 @@ pub trait DistroInfo: Sized {
                 Some(release) => date < release,
                 None => true,
             })
-            .filter(|distro_release| distro_release.version == "")
+            .filter(|distro_release| distro_release.version.is_none())
             .collect::<Vec<_>>()
             .first()
             .copied()
@@ -308,7 +311,7 @@ mod tests {
     #[test]
     fn create_struct() {
         DistroRelease {
-            version: "version".to_string(),
+            version: Some("version".to_string()),
             codename: "codename".to_string(),
             series: "series".to_string(),
             created: Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
@@ -337,7 +340,7 @@ mod tests {
             Some(get_date(2)),
             Some(get_date(3)),
         );
-        assert_eq!("version", distro_release.version);
+        assert_eq!(Some("version".to_string()), distro_release.version);
         assert_eq!("codename", distro_release.codename);
         assert_eq!("series", distro_release.series);
         assert_eq!(Some(get_date(0)), distro_release.created);
@@ -345,7 +348,7 @@ mod tests {
         assert_eq!(Some(get_date(2)), distro_release.eol);
         assert_eq!(Some(get_date(3)), distro_release.eol_server);
 
-        assert_eq!(&"version", distro_release.version());
+        assert_eq!(&Some("version".to_string()), distro_release.version());
         assert_eq!(&"codename", distro_release.codename());
         assert_eq!(&"series", distro_release.series());
         assert_eq!(&Some(get_date(0)), distro_release.created());
@@ -431,7 +434,7 @@ mod tests {
     #[test]
     fn debian_distro_info_item() {
         let distro_release = DebianDistroInfo::new().unwrap().into_iter().next().unwrap();
-        assert_eq!("1.1", distro_release.version);
+        assert_eq!(Some("1.1".to_string()), distro_release.version);
         assert_eq!("Buzz", distro_release.codename);
         assert_eq!("buzz", distro_release.series);
         assert_eq!(
@@ -452,7 +455,7 @@ mod tests {
     #[test]
     fn ubuntu_distro_info_item() {
         let distro_release = UbuntuDistroInfo::new().unwrap().into_iter().next().unwrap();
-        assert_eq!("4.10", distro_release.version);
+        assert_eq!(Some("4.10".to_string()), distro_release.version);
         assert_eq!("Warty Warthog", distro_release.codename);
         assert_eq!("warty", distro_release.series);
         assert_eq!(

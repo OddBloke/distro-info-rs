@@ -189,17 +189,19 @@ pub fn output(
         match output_mode {
             OutputMode::Codename => output_parts.push(distro_release.series().to_string()),
             OutputMode::Release => output_parts.push(
-                if distro_release.version() == "" {
-                    distro_release.series()
-                } else {
-                    distro_release.version()
-                }
-                .to_string(),
+                distro_release
+                    .version()
+                    .as_ref()
+                    .unwrap_or_else(|| distro_release.series())
+                    .to_string(),
             ),
             OutputMode::FullName => output_parts.push(format!(
                 "{} {} \"{}\"",
                 distro_name,
-                &distro_release.version(),
+                match distro_release.version() {
+                    Some(version) => version,
+                    None => "",
+                },
                 &distro_release.codename()
             )),
             OutputMode::Suppress => (),
