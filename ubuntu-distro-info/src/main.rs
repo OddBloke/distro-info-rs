@@ -1,88 +1,15 @@
 extern crate chrono;
 extern crate clap;
 extern crate distro_info;
-#[macro_use]
 extern crate failure;
 
 use chrono::naive::NaiveDate;
 use chrono::Datelike;
 use chrono::Utc;
 use clap::{App, Arg};
-use distro_info::{DistroInfo, DistroRelease, UbuntuDistroInfo};
+use distro_info::{DistroInfo, UbuntuDistroInfo};
 use failure::{Error, ResultExt};
-use ubuntu_distro_info::{add_common_args, select_distro_releases, OUTDATED_MSG};
-
-enum DaysMode {
-    Created,
-    Eol,
-    EolServer,
-    Release,
-}
-
-enum OutputMode {
-    Codename,
-    FullName,
-    Release,
-    Suppress,
-}
-
-fn determine_day_delta(current_date: NaiveDate, target_date: NaiveDate) -> i64 {
-    target_date.signed_duration_since(current_date).num_days()
-}
-
-fn output(
-    distro_releases: Vec<&DistroRelease>,
-    output_mode: &OutputMode,
-    days_mode: &Option<DaysMode>,
-    date: NaiveDate,
-) -> Result<(), Error> {
-    if distro_releases.len() == 0 {
-        bail!(OUTDATED_MSG);
-    }
-    for distro_release in distro_releases {
-        let mut output_parts = vec![];
-        match output_mode {
-            OutputMode::Codename => output_parts.push(distro_release.series().to_string()),
-            OutputMode::Release => output_parts.push(distro_release.version().to_string()),
-            OutputMode::FullName => output_parts.push(format!(
-                "Ubuntu {} \"{}\"",
-                &distro_release.version(),
-                &distro_release.codename()
-            )),
-            OutputMode::Suppress => (),
-        }
-        let target_date = match days_mode {
-            Some(DaysMode::Created) => Some(distro_release.created().ok_or(format_err!(
-                "No creation date found for {}",
-                &distro_release.series()
-            ))?),
-            Some(DaysMode::Eol) => Some(distro_release.eol().ok_or(format_err!(
-                "No EOL date found for {}",
-                &distro_release.series()
-            ))?),
-            Some(DaysMode::EolServer) => *distro_release.eol_server(),
-            Some(DaysMode::Release) => Some(distro_release.release().ok_or(format_err!(
-                "No release date found for {}",
-                &distro_release.series()
-            ))?),
-            None => None,
-        };
-        match target_date {
-            Some(target_date) => {
-                output_parts.push(format!("{}", determine_day_delta(date, target_date)));
-            }
-            None => {
-                if let Some(DaysMode::EolServer) = days_mode {
-                    output_parts.push("(unknown)".to_string())
-                }
-            }
-        };
-        if !output_parts.is_empty() {
-            println!("{}", output_parts.join(" "));
-        }
-    }
-    Ok(())
-}
+use ubuntu_distro_info::{add_common_args, output, select_distro_releases, DaysMode, OutputMode};
 
 fn today() -> NaiveDate {
     let now = Utc::now();
