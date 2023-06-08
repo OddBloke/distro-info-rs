@@ -202,10 +202,7 @@ pub fn output(
                 "No creation date found for {}",
                 &distro_release.series()
             ))?),
-            Some(DaysMode::Eol) => Some(distro_release.eol().ok_or(format_err!(
-                "No EOL date found for {}",
-                &distro_release.series()
-            ))?),
+            Some(DaysMode::Eol) => *distro_release.eol(),
             Some(DaysMode::EolServer) => *distro_release.eol_server(),
             Some(DaysMode::Release) => Some(distro_release.release().ok_or(format_err!(
                 "No release date found for {}",
@@ -217,11 +214,12 @@ pub fn output(
             Some(target_date) => {
                 output_parts.push(format!("{}", determine_day_delta(date, target_date)));
             }
-            None => {
-                if let Some(DaysMode::EolServer) = days_mode {
+            None => match days_mode {
+                Some(DaysMode::EolServer) | Some(DaysMode::Eol) => {
                     output_parts.push("(unknown)".to_string())
                 }
-            }
+                _ => (),
+            },
         };
         if !output_parts.is_empty() {
             println!("{}", output_parts.join(" "));
