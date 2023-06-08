@@ -240,7 +240,8 @@ pub fn select_distro_releases<'a>(
         distro_info.supported(date)
     } else if matches.is_present("unsupported") {
         distro_info.unsupported(date)
-    } else if matches.is_present("devel") {
+    } else if matches.is_present("devel") || matches.is_present("testing") {
+        // u-d-i --devel and d-d-i --testing share selection logic
         distro_info.devel(date)
     } else if matches.is_present("latest") {
         let devel_result = distro_info.devel(date);
