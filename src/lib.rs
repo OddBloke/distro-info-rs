@@ -29,6 +29,11 @@ impl Distro {
     }
 }
 
+fn parse_date(field: String) -> Result<NaiveDate, Error> {
+    Ok(NaiveDate::parse_from_str(field.as_str(), "%Y-%m-%d")?)
+}
+
+#[derive(Default, Clone, Debug)]
 pub struct DistroRelease {
     version: Option<String>,
     codename: String,
@@ -36,6 +41,9 @@ pub struct DistroRelease {
     created: Option<NaiveDate>,
     release: Option<NaiveDate>,
     eol: Option<NaiveDate>,
+    eol_lts: Option<NaiveDate>,
+    eol_elts: Option<NaiveDate>,
+    eol_esm: Option<NaiveDate>,
     eol_server: Option<NaiveDate>,
 }
 
@@ -47,15 +55,25 @@ impl DistroRelease {
         created: Option<NaiveDate>,
         release: Option<NaiveDate>,
         eol: Option<NaiveDate>,
+        eol_lts: Option<NaiveDate>,
+        eol_elts: Option<NaiveDate>,
+        eol_esm: Option<NaiveDate>,
         eol_server: Option<NaiveDate>,
     ) -> Self {
         Self {
-            version: if version == "" { None } else { Some(version) },
+            version: if version.is_empty() {
+                None
+            } else {
+                Some(version)
+            },
             codename,
             series,
             created,
             release,
             eol,
+            eol_lts,
+            eol_elts,
+            eol_esm,
             eol_server,
         }
     }
@@ -82,8 +100,18 @@ impl DistroRelease {
     pub fn eol_server(&self) -> &Option<NaiveDate> {
         &self.eol_server
     }
+    pub fn eol_esm(&self) -> &Option<NaiveDate> {
+        &self.eol_esm
+    }
+    pub fn eol_elts(&self) -> &Option<NaiveDate> {
+        &self.eol_elts
+    }
+    pub fn eol_lts(&self) -> &Option<NaiveDate> {
+        &self.eol_lts
+    }
 
     // Non-getters
+    // TODO(jelmer): This should be Ubuntu-specific; it doesn't apply to Debian releases.
     pub fn is_lts(&self) -> bool {
         self.version
             .as_ref()
@@ -128,26 +156,33 @@ pub trait DistroInfo: Sized {
     /// (These records must be in the format used in debian.csv/ubuntu.csv as provided by the
     /// distro-info-data package in Debian/Ubuntu.)
     fn from_csv_reader<T: std::io::Read>(mut rdr: csv::Reader<T>) -> Result<Self, Error> {
-        let parse_required_str = |field: &Option<&str>| -> Result<String, Error> {
-            Ok(field
-                .ok_or(format_err!("failed to read required option"))?
-                .to_string())
+        let columns = rdr.headers()?.clone();
+        let parse_required_str = |field: Option<String>| -> Result<String, Error> {
+            field.ok_or(format_err!("failed to read required option"))
         };
-        let parse_date = |field: &str| -> Result<NaiveDate, Error> {
-            Ok(NaiveDate::parse_from_str(field, "%Y-%m-%d")?)
+        let getfield = |r: &csv::StringRecord, n: &str| -> Option<String> {
+            columns
+                .iter()
+                .position(|header| header == n)
+                .and_then(|i| r.get(i))
+                .map(|s| s.to_string())
         };
-
         let mut releases = vec![];
         for record in rdr.records() {
             let record = record?;
             releases.push(DistroRelease::new(
-                parse_required_str(&record.get(0))?,
-                parse_required_str(&record.get(1))?,
-                parse_required_str(&record.get(2))?,
-                record.get(3).map(parse_date).transpose()?,
-                record.get(4).map(parse_date).transpose()?,
-                record.get(5).map(parse_date).transpose()?,
-                record.get(6).map(parse_date).transpose()?,
+                parse_required_str(getfield(&record, "version"))?,
+                parse_required_str(getfield(&record, "codename"))?,
+                parse_required_str(getfield(&record, "series"))?,
+                getfield(&record, "created").map(parse_date).transpose()?,
+                getfield(&record, "release").map(parse_date).transpose()?,
+                getfield(&record, "eol").map(parse_date).transpose()?,
+                getfield(&record, "eol-lts").map(parse_date).transpose()?,
+                getfield(&record, "eol-elts").map(parse_date).transpose()?,
+                getfield(&record, "eol-esm").map(parse_date).transpose()?,
+                getfield(&record, "eol-server")
+                    .map(parse_date)
+                    .transpose()?,
             ))
         }
         Ok(Self::from_vec(releases))
@@ -158,12 +193,13 @@ pub trait DistroInfo: Sized {
         Self::from_csv_reader(
             ReaderBuilder::new()
                 .flexible(true)
+                .has_headers(true)
                 .from_path(Self::csv_path())?,
         )
     }
 
     /// Returns a vector of `DistroRelease`s for releases that had been created at the given date
-    fn all_at<'a>(&'a self, date: NaiveDate) -> Vec<&'a DistroRelease> {
+    fn all_at(&self, date: NaiveDate) -> Vec<&DistroRelease> {
         self.releases()
             .iter()
             .filter(|distro_release| match distro_release.created {
@@ -225,7 +261,7 @@ pub trait DistroInfo: Sized {
             .first()
             .copied()
             .map(|dr| vec![dr])
-            .unwrap_or_else(|| vec![])
+            .unwrap_or_else(std::vec::Vec::new)
     }
 
     /// Returns a `DistroRelease` for the latest supported, non-EOL release at the given date
@@ -318,6 +354,7 @@ mod tests {
             release: Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
             eol: Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
             eol_server: Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
+            ..Default::default()
         };
     }
 
@@ -339,6 +376,9 @@ mod tests {
             Some(get_date(1)),
             Some(get_date(2)),
             Some(get_date(3)),
+            Some(get_date(4)),
+            Some(get_date(5)),
+            Some(get_date(6)),
         );
         assert_eq!(Some("version".to_string()), distro_release.version);
         assert_eq!("codename", distro_release.codename);
@@ -346,7 +386,10 @@ mod tests {
         assert_eq!(Some(get_date(0)), distro_release.created);
         assert_eq!(Some(get_date(1)), distro_release.release);
         assert_eq!(Some(get_date(2)), distro_release.eol);
-        assert_eq!(Some(get_date(3)), distro_release.eol_server);
+        assert_eq!(Some(get_date(3)), distro_release.eol_lts);
+        assert_eq!(Some(get_date(4)), distro_release.eol_elts);
+        assert_eq!(Some(get_date(5)), distro_release.eol_esm);
+        assert_eq!(Some(get_date(6)), distro_release.eol_server);
 
         assert_eq!(&Some("version".to_string()), distro_release.version());
         assert_eq!(&"codename", distro_release.codename());
@@ -354,7 +397,10 @@ mod tests {
         assert_eq!(&Some(get_date(0)), distro_release.created());
         assert_eq!(&Some(get_date(1)), distro_release.release());
         assert_eq!(&Some(get_date(2)), distro_release.eol());
-        assert_eq!(&Some(get_date(3)), distro_release.eol_server());
+        assert_eq!(&Some(get_date(3)), distro_release.eol_lts());
+        assert_eq!(&Some(get_date(4)), distro_release.eol_elts());
+        assert_eq!(&Some(get_date(5)), distro_release.eol_esm());
+        assert_eq!(&Some(get_date(6)), distro_release.eol_server());
     }
 
     #[test]
@@ -367,6 +413,9 @@ mod tests {
             Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
             Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
             Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
+            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
+            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
+            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
         );
         assert!(distro_release.is_lts());
 
@@ -374,6 +423,9 @@ mod tests {
             "98.04".to_string(),
             "codename".to_string(),
             "series".to_string(),
+            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
+            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
+            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
             Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
             Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
             Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
@@ -391,6 +443,9 @@ mod tests {
             Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
             Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
             Some(NaiveDate::from_ymd_opt(2018, 6, 16).unwrap()),
+            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
+            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
+            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
             Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
         );
         // not released before release day
@@ -411,6 +466,9 @@ mod tests {
             Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
             Some(NaiveDate::from_ymd_opt(2018, 6, 16).unwrap()),
             Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
+            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
+            None,
+            None,
         );
         // not supported before release day
         assert!(!distro_release.supported_at(NaiveDate::from_ymd_opt(2018, 6, 13).unwrap()));
@@ -423,7 +481,6 @@ mod tests {
     #[test]
     fn debian_distro_info_new() {
         DebianDistroInfo::new().unwrap();
-        ()
     }
 
     #[test]
