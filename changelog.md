@@ -1,3 +1,18 @@
+<a name="v0.4.0"></a>
+## v0.4.0 (2023-06-19)
+
+#### Features
+
+* **distro-info:**
+  *  substantial refactoring to include `DebianDistroInfo`
+* **binaries:**
+  *  introduce `debian-distro-info` command
+  *  various `ubuntu-distro-info` improvements
+
+#### Breaking Changes
+
+* **distro-info:**  numerous
+
 <a name="0.3.0"></a>
 ## 0.3.0 (2018-06-24)
 
