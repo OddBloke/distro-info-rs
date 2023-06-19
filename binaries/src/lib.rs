@@ -85,7 +85,8 @@ pub fn add_common_args(app_name: &'static str, additional_selectors: &'static [&
         .group(ArgGroup::new("output").args(&["codename", "fullname", "release"]))
 }
 
-pub fn common_run(matches: &ArgMatches, distro_info: &impl DistroInfo) -> Result<(), Error> {
+pub fn common_run(command: Command, distro_info: &impl DistroInfo) -> Result<(), Error> {
+    let matches = command.try_get_matches()?;
     let date = match matches.get_one::<String>("date") {
         Some(date_str) => NaiveDate::parse_from_str(date_str, "%Y-%m-%d").with_context(|| {
             format!(

@@ -3,14 +3,13 @@ use distro_info::{DebianDistroInfo, DistroInfo};
 use distro_info_binaries::{add_common_args, common_run, flag};
 
 fn run() -> Result<(), Error> {
-    let app = add_common_args("debian-distro-info", &["testing"]).arg(flag(
+    let command = add_common_args("debian-distro-info", &["testing"]).arg(flag(
         "testing",
         Some('t'),
         "current testing version",
     ));
-    let matches = app.try_get_matches()?;
     let debian_distro_info = DebianDistroInfo::new()?;
-    common_run(&matches, &debian_distro_info)
+    common_run(command, &debian_distro_info)
 }
 
 fn main() {
