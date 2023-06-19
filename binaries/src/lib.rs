@@ -2,7 +2,7 @@ use anyhow::{bail, format_err, Context, Error};
 use chrono::Datelike;
 use chrono::NaiveDate;
 use chrono::Utc;
-use clap::{App, Arg, ArgGroup, ArgMatches};
+use clap::{crate_version, Arg, ArgAction, ArgGroup, ArgMatches, Command};
 use distro_info::Distro;
 use distro_info::{DistroInfo, DistroRelease};
 
@@ -24,7 +24,7 @@ pub enum OutputMode {
 }
 
 /// Add arguments common to both ubuntu- and debian-distro-info to `app`
-pub fn add_common_args<'a>(app: App<'a, 'a>, additional_selectors: &'a [&str]) -> App<'a, 'a> {
+pub fn add_common_args(app: Command, additional_selectors: &'static [&str]) -> Command {
     let mut selectors = vec![
         "all",
         "devel",
@@ -34,86 +34,88 @@ pub fn add_common_args<'a>(app: App<'a, 'a>, additional_selectors: &'a [&str]) -
         "unsupported",
     ];
     selectors.extend(additional_selectors);
-    app.version("0.1.0")
+    app.version(crate_version!())
         .author("Daniel Watkins <daniel@daniel-watkins.co.uk>")
         .arg(
-            Arg::with_name("all")
-                .short("a")
+            Arg::new("all")
+                .action(ArgAction::SetTrue)
+                .short('a')
                 .long("all")
                 .help("list all known versions"),
         )
         .arg(
-            Arg::with_name("devel")
-                .short("d")
+            Arg::new("devel")
+                .action(ArgAction::SetTrue)
+                .short('d')
                 .long("devel")
                 .help("latest development version"),
         )
         .arg(
-            Arg::with_name("series")
+            Arg::new("series")
                 .long("series")
-                .takes_value(true)
                 .help("series to calculate the version for"),
         )
         .arg(
-            Arg::with_name("stable")
-                .short("s")
+            Arg::new("stable")
+                .action(ArgAction::SetTrue)
+                .short('s')
                 .long("stable")
                 .help("latest stable version"),
         )
         .arg(
-            Arg::with_name("supported")
+            Arg::new("supported")
+                .action(ArgAction::SetTrue)
                 .long("supported")
                 .help("list of all supported stable versions"),
         )
         .arg(
-            Arg::with_name("unsupported")
+            Arg::new("unsupported")
+                .action(ArgAction::SetTrue)
                 .long("unsupported")
                 .help("list of all unsupported stable versions"),
         )
         .arg(
-            Arg::with_name("codename")
-                .short("c")
+            Arg::new("codename")
+                .action(ArgAction::SetTrue)
+                .short('c')
                 .long("codename")
                 .help("print the codename (default)"),
         )
         .arg(
-            Arg::with_name("fullname")
-                .short("f")
+            Arg::new("fullname")
+                .action(ArgAction::SetTrue)
+                .short('f')
                 .long("fullname")
                 .help("print the full name"),
         )
         .arg(
-            Arg::with_name("release")
-                .short("r")
+            Arg::new("release")
+                .action(ArgAction::SetTrue)
+                .short('r')
                 .long("release")
                 .help("print the release version"),
         )
         .arg(
-            Arg::with_name("date")
+            Arg::new("date")
                 .long("date")
-                .takes_value(true)
                 .help("date for calculating the version (default: today)"),
         )
         .arg(
-            Arg::with_name("days")
-                .short("y")
+            Arg::new("days")
+                .short('y')
                 .long("days")
-                .takes_value(true)
-                .default_value("release")
-                .possible_values(&["created", "eol", "eol-server", "release"])
+                .default_missing_value("release")
+                .num_args(0..=1)
+                .value_parser(["created", "eol", "eol-server", "release"])
                 .value_name("milestone")
                 .help("additionally, display days until milestone"),
         )
-        .group(
-            ArgGroup::with_name("selector")
-                .args(&selectors)
-                .required(true),
-        )
-        .group(ArgGroup::with_name("output").args(&["codename", "fullname", "release"]))
+        .group(ArgGroup::new("selector").args(&selectors).required(true))
+        .group(ArgGroup::new("output").args(&["codename", "fullname", "release"]))
 }
 
 pub fn common_run(matches: &ArgMatches, distro_info: &impl DistroInfo) -> Result<(), Error> {
-    let date = match matches.value_of("date") {
+    let date = match matches.get_one::<String>("date") {
         Some(date_str) => NaiveDate::parse_from_str(date_str, "%Y-%m-%d").with_context(|| {
             format!(
                 "Failed to parse date '{}'; must be YYYY-MM-DD format",
@@ -123,19 +125,17 @@ pub fn common_run(matches: &ArgMatches, distro_info: &impl DistroInfo) -> Result
         None => today(),
     };
     let distro_releases_iter = select_distro_releases(&matches, date, distro_info)?;
-    let days_mode = if matches.occurrences_of("days") == 0 {
-        None
-    } else {
-        matches.value_of("days").map(|value| match value {
+    let days_mode = matches
+        .get_one::<String>("days")
+        .map(|value| match value.as_str() {
             "created" => DaysMode::Created,
             "eol" => DaysMode::Eol,
             "eol-server" => DaysMode::EolServer,
             "release" => DaysMode::Release,
             _ => panic!("unknown days mode found; please report a bug"),
-        })
-    };
+        });
     let distro_name = distro_info.distro().to_string();
-    if matches.is_present("fullname") {
+    if matches.get_flag("fullname") {
         output(
             distro_name,
             distro_releases_iter,
@@ -143,7 +143,7 @@ pub fn common_run(matches: &ArgMatches, distro_info: &impl DistroInfo) -> Result
             &days_mode,
             date,
         )?;
-    } else if matches.is_present("release") {
+    } else if matches.get_flag("release") {
         output(
             distro_name,
             distro_releases_iter,
@@ -151,7 +151,7 @@ pub fn common_run(matches: &ArgMatches, distro_info: &impl DistroInfo) -> Result
             &days_mode,
             date,
         )?;
-    } else if matches.is_present("codename") || days_mode.is_none() {
+    } else if matches.get_flag("codename") || days_mode.is_none() {
         // This should be the default output _unless_ --days is specified
         output(
             distro_name,
@@ -244,21 +244,21 @@ pub fn select_distro_releases<'a>(
     date: NaiveDate,
     distro_info: &'a impl DistroInfo,
 ) -> Result<Vec<&'a DistroRelease>, Error> {
-    Ok(if matches.is_present("all") {
+    Ok(if matches.get_flag("all") {
         distro_info.iter().collect()
-    } else if matches.is_present("supported") {
+    } else if matches.get_flag("supported") {
         distro_info.supported(date)
-    } else if matches.is_present("unsupported") {
+    } else if matches.get_flag("unsupported") {
         distro_info.unsupported(date)
-    } else if matches.is_present("devel") {
+    } else if matches.get_flag("devel") {
         match distro_info.distro() {
             Distro::Ubuntu => distro_info.ubuntu_devel(date),
             Distro::Debian => distro_info.debian_devel(date),
         }
-    } else if matches.is_present("testing") {
+    } else if matches.try_get_one::<bool>("testing").is_ok() && matches.get_flag("testing") {
         // d-d-i --testing selection matches u-d-i --devel
         distro_info.ubuntu_devel(date)
-    } else if matches.is_present("latest") {
+    } else if matches.try_get_one::<bool>("latest").is_ok() && matches.get_flag("latest") {
         let devel_result = distro_info.ubuntu_devel(date);
         if devel_result.len() > 0 {
             vec![*devel_result.last().unwrap()]
@@ -268,7 +268,7 @@ pub fn select_distro_releases<'a>(
                 .map(|distro_release| vec![distro_release])
                 .unwrap_or_else(|| vec![])
         }
-    } else if matches.is_present("lts") {
+    } else if matches.try_get_one::<bool>("lts").is_ok() && matches.get_flag("lts") {
         let mut lts_releases = vec![];
         for distro_release in distro_info.all_at(date) {
             if distro_release.is_lts() {
@@ -279,13 +279,13 @@ pub fn select_distro_releases<'a>(
             Some(release) => vec![*release],
             None => bail!(OUTDATED_MSG),
         }
-    } else if matches.is_present("stable") {
+    } else if matches.get_flag("stable") {
         distro_info
             .latest(date)
             .map(|distro_release| vec![distro_release])
             .unwrap_or_else(|| vec![])
-    } else if matches.is_present("series") {
-        match matches.value_of("series") {
+    } else if matches.contains_id("series") {
+        match matches.get_one::<String>("series") {
             Some(needle_series) => {
                 if !needle_series.chars().all(|c| c.is_lowercase()) {
                     bail!("invalid distribution series `{}'", needle_series);
