@@ -1,12 +1,12 @@
+extern crate anyhow;
 extern crate chrono;
 extern crate clap;
 extern crate distro_info;
-extern crate failure;
 
+use anyhow::Error;
 use clap::{App, Arg};
 use distro_info::{DistroInfo, UbuntuDistroInfo};
 use distro_info_binaries::{add_common_args, common_run};
-use failure::Error;
 
 fn run() -> Result<(), Error> {
     let additional_selectors = &["latest", "lts"];

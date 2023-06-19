@@ -1,10 +1,10 @@
+use anyhow::{bail, format_err, Context, Error};
 use chrono::Datelike;
 use chrono::NaiveDate;
 use chrono::Utc;
 use clap::{App, Arg, ArgGroup, ArgMatches};
 use distro_info::Distro;
 use distro_info::{DistroInfo, DistroRelease};
-use failure::{bail, format_err, Error, ResultExt};
 
 pub const OUTDATED_MSG: &str = "Distribution data outdated.
 Please check for an update for distro-info-data. See /usr/share/doc/distro-info-data/README.Debian for details.";
@@ -114,10 +114,12 @@ pub fn add_common_args<'a>(app: App<'a, 'a>, additional_selectors: &'a [&str]) -
 
 pub fn common_run(matches: &ArgMatches, distro_info: &impl DistroInfo) -> Result<(), Error> {
     let date = match matches.value_of("date") {
-        Some(date_str) => NaiveDate::parse_from_str(date_str, "%Y-%m-%d").context(format!(
-            "Failed to parse date '{}'; must be YYYY-MM-DD format",
-            date_str
-        ))?,
+        Some(date_str) => NaiveDate::parse_from_str(date_str, "%Y-%m-%d").with_context(|| {
+            format!(
+                "Failed to parse date '{}'; must be YYYY-MM-DD format",
+                date_str
+            )
+        })?,
         None => today(),
     };
     let distro_releases_iter = select_distro_releases(&matches, date, distro_info)?;
