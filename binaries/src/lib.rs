@@ -23,6 +23,14 @@ pub enum OutputMode {
     Suppress,
 }
 
+pub fn flag(name: &'static str, short: char, help: &'static str) -> Arg {
+    Arg::new(name)
+        .action(ArgAction::SetTrue)
+        .short(short)
+        .long(name)
+        .help(help)
+}
+
 /// Add arguments common to both ubuntu- and debian-distro-info to `app`
 pub fn add_common_args(app: Command, additional_selectors: &'static [&str]) -> Command {
     let mut selectors = vec![
@@ -36,32 +44,14 @@ pub fn add_common_args(app: Command, additional_selectors: &'static [&str]) -> C
     selectors.extend(additional_selectors);
     app.version(crate_version!())
         .author("Daniel Watkins <daniel@daniel-watkins.co.uk>")
-        .arg(
-            Arg::new("all")
-                .action(ArgAction::SetTrue)
-                .short('a')
-                .long("all")
-                .help("list all known versions"),
-        )
-        .arg(
-            Arg::new("devel")
-                .action(ArgAction::SetTrue)
-                .short('d')
-                .long("devel")
-                .help("latest development version"),
-        )
+        .arg(flag("all", 'a', "list all known versions"))
+        .arg(flag("devel", 'd', "latest development version"))
         .arg(
             Arg::new("series")
                 .long("series")
                 .help("series to calculate the version for"),
         )
-        .arg(
-            Arg::new("stable")
-                .action(ArgAction::SetTrue)
-                .short('s')
-                .long("stable")
-                .help("latest stable version"),
-        )
+        .arg(flag("stable", 's', "latest stable version"))
         .arg(
             Arg::new("supported")
                 .action(ArgAction::SetTrue)
@@ -74,27 +64,9 @@ pub fn add_common_args(app: Command, additional_selectors: &'static [&str]) -> C
                 .long("unsupported")
                 .help("list of all unsupported stable versions"),
         )
-        .arg(
-            Arg::new("codename")
-                .action(ArgAction::SetTrue)
-                .short('c')
-                .long("codename")
-                .help("print the codename (default)"),
-        )
-        .arg(
-            Arg::new("fullname")
-                .action(ArgAction::SetTrue)
-                .short('f')
-                .long("fullname")
-                .help("print the full name"),
-        )
-        .arg(
-            Arg::new("release")
-                .action(ArgAction::SetTrue)
-                .short('r')
-                .long("release")
-                .help("print the release version"),
-        )
+        .arg(flag("codename", 'c', "print the codename (default)"))
+        .arg(flag("fullname", 'f', "print the full name"))
+        .arg(flag("release", 'r', "print the release version"))
         .arg(
             Arg::new("date")
                 .long("date")

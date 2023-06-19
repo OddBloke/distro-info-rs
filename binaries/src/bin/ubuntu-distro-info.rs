@@ -6,17 +6,12 @@ extern crate distro_info;
 use anyhow::Error;
 use clap::{Arg, ArgAction, Command};
 use distro_info::{DistroInfo, UbuntuDistroInfo};
-use distro_info_binaries::{add_common_args, common_run};
+use distro_info_binaries::{add_common_args, common_run, flag};
 
 fn run() -> Result<(), Error> {
     let additional_selectors = &["latest", "lts"];
     let app = add_common_args(Command::new("ubuntu-distro-info"), additional_selectors)
-        .arg(
-            Arg::new("latest")
-                .action(ArgAction::SetTrue)
-                .short('l')
-                .long("latest"),
-        )
+        .arg(flag("latest", 'l', ""))
         .arg(
             Arg::new("lts")
                 .action(ArgAction::SetTrue)
