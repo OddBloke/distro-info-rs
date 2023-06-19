@@ -4,20 +4,26 @@ extern crate clap;
 extern crate distro_info;
 
 use anyhow::Error;
-use clap::{App, Arg};
+use clap::{Arg, ArgAction, Command};
 use distro_info::{DistroInfo, UbuntuDistroInfo};
 use distro_info_binaries::{add_common_args, common_run};
 
 fn run() -> Result<(), Error> {
     let additional_selectors = &["latest", "lts"];
-    let app = add_common_args(App::new("ubuntu-distro-info"), additional_selectors)
-        .arg(Arg::with_name("latest").short("l").long("latest"))
+    let app = add_common_args(Command::new("ubuntu-distro-info"), additional_selectors)
         .arg(
-            Arg::with_name("lts")
+            Arg::new("latest")
+                .action(ArgAction::SetTrue)
+                .short('l')
+                .long("latest"),
+        )
+        .arg(
+            Arg::new("lts")
+                .action(ArgAction::SetTrue)
                 .long("lts")
                 .help("latest long term support (LTS) version"),
         );
-    let matches = app.get_matches();
+    let matches = app.try_get_matches()?;
     let ubuntu_distro_info = UbuntuDistroInfo::new()?;
     common_run(&matches, &ubuntu_distro_info)
 }
