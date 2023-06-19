@@ -6,11 +6,11 @@
 extern crate chrono;
 extern crate csv;
 #[macro_use]
-extern crate failure;
+extern crate anyhow;
 
+use anyhow::Error;
 use chrono::naive::NaiveDate;
 use csv::ReaderBuilder;
-use failure::Error;
 
 const UBUNTU_CSV_PATH: &str = "/usr/share/distro-info/ubuntu.csv";
 const DEBIAN_CSV_PATH: &str = "/usr/share/distro-info/debian.csv";

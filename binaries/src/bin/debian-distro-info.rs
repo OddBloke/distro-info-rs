@@ -1,7 +1,7 @@
+use anyhow::Error;
 use clap::{App, Arg};
 use distro_info::{DebianDistroInfo, DistroInfo};
 use distro_info_binaries::{add_common_args, common_run};
-use failure::Error;
 
 fn run() -> Result<(), Error> {
     let app = add_common_args(App::new("debian-distro-info"), &["testing"])
