@@ -23,7 +23,7 @@ pub enum OutputMode {
     Suppress,
 }
 
-pub fn flag(name: &'static str, short: char, help: &'static str) -> Arg {
+pub fn flag(name: &'static str, short: Option<char>, help: &'static str) -> Arg {
     Arg::new(name)
         .action(ArgAction::SetTrue)
         .short(short)
@@ -44,29 +44,27 @@ pub fn add_common_args(app: Command, additional_selectors: &'static [&str]) -> C
     selectors.extend(additional_selectors);
     app.version(crate_version!())
         .author("Daniel Watkins <daniel@daniel-watkins.co.uk>")
-        .arg(flag("all", 'a', "list all known versions"))
-        .arg(flag("devel", 'd', "latest development version"))
+        .arg(flag("all", Some('a'), "list all known versions"))
+        .arg(flag("devel", Some('d'), "latest development version"))
         .arg(
             Arg::new("series")
                 .long("series")
                 .help("series to calculate the version for"),
         )
-        .arg(flag("stable", 's', "latest stable version"))
-        .arg(
-            Arg::new("supported")
-                .action(ArgAction::SetTrue)
-                .long("supported")
-                .help("list of all supported stable versions"),
-        )
-        .arg(
-            Arg::new("unsupported")
-                .action(ArgAction::SetTrue)
-                .long("unsupported")
-                .help("list of all unsupported stable versions"),
-        )
-        .arg(flag("codename", 'c', "print the codename (default)"))
-        .arg(flag("fullname", 'f', "print the full name"))
-        .arg(flag("release", 'r', "print the release version"))
+        .arg(flag("stable", Some('s'), "latest stable version"))
+        .arg(flag(
+            "supported",
+            None,
+            "list of all supported stable versions",
+        ))
+        .arg(flag(
+            "unsupported",
+            None,
+            "list of all unsupported stable versions",
+        ))
+        .arg(flag("codename", Some('c'), "print the codename (default)"))
+        .arg(flag("fullname", Some('f'), "print the full name"))
+        .arg(flag("release", Some('r'), "print the release version"))
         .arg(
             Arg::new("date")
                 .long("date")

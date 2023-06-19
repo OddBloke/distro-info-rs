@@ -6,7 +6,7 @@ use distro_info_binaries::{add_common_args, common_run, flag};
 fn run() -> Result<(), Error> {
     let app = add_common_args(Command::new("debian-distro-info"), &["testing"]).arg(flag(
         "testing",
-        't',
+        Some('t'),
         "current testing version",
     ));
     let matches = app.try_get_matches()?;
