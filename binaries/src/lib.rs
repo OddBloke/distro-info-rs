@@ -32,7 +32,7 @@ pub fn flag(name: &'static str, short: Option<char>, help: &'static str) -> Arg 
 }
 
 /// Add arguments common to both ubuntu- and debian-distro-info to `app`
-pub fn add_common_args(app: Command, additional_selectors: &'static [&str]) -> Command {
+pub fn add_common_args(app_name: &'static str, additional_selectors: &'static [&str]) -> Command {
     let mut selectors = vec![
         "all",
         "devel",
@@ -42,7 +42,8 @@ pub fn add_common_args(app: Command, additional_selectors: &'static [&str]) -> C
         "unsupported",
     ];
     selectors.extend(additional_selectors);
-    app.version(crate_version!())
+    Command::new(app_name)
+        .version(crate_version!())
         .author("Daniel Watkins <daniel@daniel-watkins.co.uk>")
         .arg(flag("all", Some('a'), "list all known versions"))
         .arg(flag("devel", Some('d'), "latest development version"))
