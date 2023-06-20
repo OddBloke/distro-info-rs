@@ -11,11 +11,24 @@ use distro_info::{DistroInfo, DistroRelease};
 pub const OUTDATED_MSG: &str = "Distribution data outdated.
 Please check for an update for distro-info-data. See /usr/share/doc/distro-info-data/README.Debian for details.";
 
+#[derive(Clone)]
 pub enum DaysMode {
     Created,
     Eol,
     EolServer,
     Release,
+}
+
+impl DaysMode {
+    pub fn from_cli(value: &str) -> Result<Self, Error> {
+        match value {
+            "created" => Ok(Self::Created),
+            "eol" => Ok(Self::Eol),
+            "eol-server" => Ok(Self::EolServer),
+            "release" => Ok(Self::Release),
+            _ => bail!("unknown days mode found; please report a bug"),
+        }
+    }
 }
 
 pub enum OutputMode {
@@ -85,7 +98,7 @@ impl DistroInfoCommand {
                     .long("days")
                     .default_missing_value("release")
                     .num_args(0..=1)
-                    .value_parser(["created", "eol", "eol-server", "release"])
+                    .value_parser(DaysMode::from_cli)
                     .value_name("milestone")
                     .help("additionally, display days until milestone"),
             )
@@ -122,15 +135,7 @@ impl DistroInfoCommand {
             None => today(),
         };
         let distro_releases_iter = select_distro_releases(&matches, date, distro_info)?;
-        let days_mode = matches
-            .get_one::<String>("days")
-            .map(|value| match value.as_str() {
-                "created" => DaysMode::Created,
-                "eol" => DaysMode::Eol,
-                "eol-server" => DaysMode::EolServer,
-                "release" => DaysMode::Release,
-                _ => panic!("unknown days mode found; please report a bug"),
-            });
+        let days_mode = matches.get_one::<DaysMode>("days");
         let distro_name = distro_info.distro().to_string();
         if matches.get_flag("fullname") {
             output(
@@ -178,7 +183,7 @@ pub fn output(
     distro_name: &str,
     distro_releases: Vec<&DistroRelease>,
     output_mode: &OutputMode,
-    days_mode: &Option<DaysMode>,
+    days_mode: &Option<&DaysMode>,
     date: NaiveDate,
 ) -> Result<(), Error> {
     if distro_releases.is_empty() {
