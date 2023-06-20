@@ -8,6 +8,8 @@ extern crate csv;
 #[macro_use]
 extern crate anyhow;
 
+use std::env;
+
 use anyhow::Error;
 use chrono::naive::NaiveDate;
 use csv::ReaderBuilder;
@@ -148,8 +150,8 @@ pub trait DistroInfo: Sized {
     fn releases(&self) -> &Vec<DistroRelease>;
     fn from_vec(releases: Vec<DistroRelease>) -> Self;
     /// The full path to the CSV file to read from for this distro
-    fn csv_path() -> &'static str {
-        Self::DEFAULT_CSV_PATH
+    fn csv_path() -> String {
+        env::var("DISTRO_INFO_CSV").unwrap_or(Self::DEFAULT_CSV_PATH.to_string())
     }
     /// Read records from the given CSV reader to create a Debian/UbuntuDistroInfo object
     ///
