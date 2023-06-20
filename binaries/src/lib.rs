@@ -29,6 +29,21 @@ impl DaysMode {
             _ => bail!("unknown days mode found; please report a bug"),
         }
     }
+
+    pub fn date_for(&self, distro_release: &DistroRelease) -> Result<Option<NaiveDate>, Error> {
+        Ok(match self {
+            DaysMode::Created => Some(distro_release.created().ok_or(format_err!(
+                "No creation date found for {}",
+                &distro_release.series()
+            ))?),
+            DaysMode::Eol => *distro_release.eol(),
+            DaysMode::EolServer => *distro_release.eol_server(),
+            DaysMode::Release => Some(distro_release.release().ok_or(format_err!(
+                "No release date found for {}",
+                &distro_release.series()
+            ))?),
+        })
+    }
 }
 
 pub enum OutputMode {
@@ -211,19 +226,10 @@ pub fn output(
             )),
             OutputMode::Suppress => (),
         }
-        let target_date = match days_mode {
-            Some(DaysMode::Created) => Some(distro_release.created().ok_or(format_err!(
-                "No creation date found for {}",
-                &distro_release.series()
-            ))?),
-            Some(DaysMode::Eol) => *distro_release.eol(),
-            Some(DaysMode::EolServer) => *distro_release.eol_server(),
-            Some(DaysMode::Release) => Some(distro_release.release().ok_or(format_err!(
-                "No release date found for {}",
-                &distro_release.series()
-            ))?),
-            None => None,
-        };
+        let target_date = days_mode
+            .map(|days_mode| days_mode.date_for(distro_release))
+            .transpose()?
+            .flatten();
         match target_date {
             Some(target_date) => {
                 output_parts.push(format!("{}", determine_day_delta(date, target_date)));
