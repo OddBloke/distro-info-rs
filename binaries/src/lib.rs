@@ -315,5 +315,5 @@ pub fn select_distro_releases<'a>(
 
 fn today() -> NaiveDate {
     let now = Utc::now();
-    NaiveDate::from_ymd(now.year(), now.month(), now.day())
+    NaiveDate::from_ymd_opt(now.year(), now.month(), now.day()).unwrap()
 }
