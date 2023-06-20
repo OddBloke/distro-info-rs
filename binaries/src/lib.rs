@@ -242,6 +242,12 @@ pub fn select_distro_releases<'a>(
     date: NaiveDate,
     distro_info: &'a impl DistroInfo,
 ) -> Result<Vec<&'a DistroRelease>, Error> {
+    let get_maybe_missing_flag = |name: &str| -> bool {
+        match matches.try_get_one::<bool>(name) {
+            Ok(flag) => *flag.unwrap_or(&false),
+            Err(_) => false,
+        }
+    };
     Ok(if matches.get_flag("all") {
         distro_info.iter().collect()
     } else if matches.get_flag("supported") {
@@ -253,10 +259,10 @@ pub fn select_distro_releases<'a>(
             Distro::Ubuntu => distro_info.ubuntu_devel(date),
             Distro::Debian => distro_info.debian_devel(date),
         }
-    } else if matches.try_get_one::<bool>("testing").is_ok() && matches.get_flag("testing") {
+    } else if get_maybe_missing_flag("testing") {
         // d-d-i --testing selection matches u-d-i --devel
         distro_info.ubuntu_devel(date)
-    } else if matches.try_get_one::<bool>("latest").is_ok() && matches.get_flag("latest") {
+    } else if get_maybe_missing_flag("latest") {
         let devel_result = distro_info.ubuntu_devel(date);
         if devel_result.len() > 0 {
             vec![*devel_result.last().unwrap()]
@@ -266,7 +272,7 @@ pub fn select_distro_releases<'a>(
                 .map(|distro_release| vec![distro_release])
                 .unwrap_or_else(|| vec![])
         }
-    } else if matches.try_get_one::<bool>("lts").is_ok() && matches.get_flag("lts") {
+    } else if get_maybe_missing_flag("lts") {
         let mut lts_releases = vec![];
         for distro_release in distro_info.all_at(date) {
             if distro_release.is_lts() {
