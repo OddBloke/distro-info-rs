@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use anyhow::{bail, format_err, Context, Error};
 use chrono::Datelike;
 use chrono::NaiveDate;
@@ -32,7 +34,10 @@ pub fn flag(name: &'static str, short: Option<char>, help: &'static str) -> Arg 
 }
 
 /// Add arguments common to both ubuntu- and debian-distro-info to `app`
-pub fn add_common_args(app_name: &'static str, additional_selectors: &'static [&str]) -> Command {
+pub fn add_common_args(
+    app_name: &'static str,
+    additional_selectors: HashMap<&'static str, (Option<char>, &'static str)>,
+) -> Command {
     let mut selectors = vec![
         "all",
         "devel",
@@ -41,8 +46,8 @@ pub fn add_common_args(app_name: &'static str, additional_selectors: &'static [&
         "supported",
         "unsupported",
     ];
-    selectors.extend(additional_selectors);
-    Command::new(app_name)
+    selectors.extend(additional_selectors.keys());
+    let mut command = Command::new(app_name)
         .version(crate_version!())
         .author("Daniel Watkins <daniel@daniel-watkins.co.uk>")
         .arg(flag("all", Some('a'), "list all known versions"))
@@ -82,7 +87,11 @@ pub fn add_common_args(app_name: &'static str, additional_selectors: &'static [&
                 .help("additionally, display days until milestone"),
         )
         .group(ArgGroup::new("selector").args(&selectors).required(true))
-        .group(ArgGroup::new("output").args(&["codename", "fullname", "release"]))
+        .group(ArgGroup::new("output").args(&["codename", "fullname", "release"]));
+    for (long, (short, help)) in additional_selectors {
+        command = command.arg(flag(long, short, help));
+    }
+    command
 }
 
 pub fn common_run(command: Command, distro_info: &impl DistroInfo) -> Result<(), Error> {
