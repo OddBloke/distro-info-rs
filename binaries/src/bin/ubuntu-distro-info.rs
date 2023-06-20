@@ -3,15 +3,18 @@ extern crate chrono;
 extern crate clap;
 extern crate distro_info;
 
+use std::collections::HashMap;
+
 use anyhow::Error;
 use distro_info::{DistroInfo, UbuntuDistroInfo};
-use distro_info_binaries::{add_common_args, common_run, flag};
+use distro_info_binaries::{add_common_args, common_run};
 
 fn run() -> Result<(), Error> {
-    let additional_selectors = &["latest", "lts"];
-    let command = add_common_args("ubuntu-distro-info", additional_selectors)
-        .arg(flag("latest", Some('l'), ""))
-        .arg(flag("lts", None, "latest long term support (LTS) version"));
+    let additional_selectors = HashMap::from([
+        ("latest", (Some('l'), "")),
+        ("lts", (None, "latest long term support (LTS) version")),
+    ]);
+    let command = add_common_args("ubuntu-distro-info", additional_selectors);
     let ubuntu_distro_info = UbuntuDistroInfo::new()?;
     common_run(command, &ubuntu_distro_info)
 }
