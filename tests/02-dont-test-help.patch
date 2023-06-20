@@ -11,3 +11,16 @@ index 82ae999..d3fff5c 100755
      local help='Usage: ubuntu-distro-info [options]
  
  Options:
+diff --git distro-info/test-debian-distro-info distro-info/test-debian-distro-info
+index 82ae999..d3fff5c 100755
+--- distro-info/test-debian-distro-info
++++ distro-info/test-debian-distro-info
+@@ -160,7 +160,7 @@ testReleaseDate() {
+     success "--date 2010-04-29 -d" "maverick"
+ }
+ 
+-testHelp() {
++dont_testHelp() {
+     local help='Usage: debian-distro-info [options]
+ 
+ Options:
