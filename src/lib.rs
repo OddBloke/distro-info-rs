@@ -12,9 +12,6 @@ use anyhow::Error;
 use chrono::naive::NaiveDate;
 use csv::ReaderBuilder;
 
-const UBUNTU_CSV_PATH: &str = "/usr/share/distro-info/ubuntu.csv";
-const DEBIAN_CSV_PATH: &str = "/usr/share/distro-info/debian.csv";
-
 pub enum Distro {
     Debian,
     Ubuntu,
@@ -146,11 +143,14 @@ impl DistroRelease {
 }
 
 pub trait DistroInfo: Sized {
+    const DEFAULT_CSV_PATH: &'static str;
     fn distro(&self) -> &Distro;
     fn releases(&self) -> &Vec<DistroRelease>;
     fn from_vec(releases: Vec<DistroRelease>) -> Self;
     /// The full path to the CSV file to read from for this distro
-    fn csv_path() -> &'static str;
+    fn csv_path() -> &'static str {
+        Self::DEFAULT_CSV_PATH
+    }
     /// Read records from the given CSV reader to create a Debian/UbuntuDistroInfo object
     ///
     /// (These records must be in the format used in debian.csv/ubuntu.csv as provided by the
@@ -284,14 +284,12 @@ pub struct UbuntuDistroInfo {
 }
 
 impl DistroInfo for UbuntuDistroInfo {
+    const DEFAULT_CSV_PATH: &'static str = "/usr/share/distro-info/ubuntu.csv";
     fn distro(&self) -> &Distro {
         &Distro::Ubuntu
     }
     fn releases(&self) -> &Vec<DistroRelease> {
         &self.releases
-    }
-    fn csv_path() -> &'static str {
-        UBUNTU_CSV_PATH
     }
     /// Initialise an UbuntuDistroInfo struct from a vector of DistroReleases
     fn from_vec(releases: Vec<DistroRelease>) -> Self {
@@ -313,14 +311,12 @@ pub struct DebianDistroInfo {
 }
 
 impl DistroInfo for DebianDistroInfo {
+    const DEFAULT_CSV_PATH: &'static str = "/usr/share/distro-info/debian.csv";
     fn distro(&self) -> &Distro {
         &Distro::Debian
     }
     fn releases(&self) -> &Vec<DistroRelease> {
         &self.releases
-    }
-    fn csv_path() -> &'static str {
-        DEBIAN_CSV_PATH
     }
     /// Initialise an DebianDistroInfo struct from a vector of DistroReleases
     fn from_vec(releases: Vec<DistroRelease>) -> Self {
