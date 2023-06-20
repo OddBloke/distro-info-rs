@@ -33,65 +33,69 @@ pub fn flag(name: &'static str, short: Option<char>, help: &'static str) -> Arg 
         .help(help)
 }
 
-/// Add arguments common to both ubuntu- and debian-distro-info to `app`
-pub fn add_common_args(
-    app_name: &'static str,
-    additional_selectors: HashMap<&'static str, (Option<char>, &'static str)>,
-) -> Command {
-    let mut selectors = vec![
-        "all",
-        "devel",
-        "series",
-        "stable",
-        "supported",
-        "unsupported",
-    ];
-    selectors.extend(additional_selectors.keys());
-    let mut command = Command::new(app_name)
-        .version(crate_version!())
-        .author("Daniel Watkins <daniel@daniel-watkins.co.uk>")
-        .arg(flag("all", Some('a'), "list all known versions"))
-        .arg(flag("devel", Some('d'), "latest development version"))
-        .arg(
-            Arg::new("series")
-                .long("series")
-                .help("series to calculate the version for"),
-        )
-        .arg(flag("stable", Some('s'), "latest stable version"))
-        .arg(flag(
+pub struct DistroInfoCommand {
+    pub command_name: &'static str,
+    pub additional_selectors: HashMap<&'static str, (Option<char>, &'static str)>,
+}
+
+impl DistroInfoCommand {
+    /// Add arguments common to both ubuntu- and debian-distro-info to `app`
+    pub fn create_command(self) -> Command {
+        let mut selectors = vec![
+            "all",
+            "devel",
+            "series",
+            "stable",
             "supported",
-            None,
-            "list of all supported stable versions",
-        ))
-        .arg(flag(
             "unsupported",
-            None,
-            "list of all unsupported stable versions",
-        ))
-        .arg(flag("codename", Some('c'), "print the codename (default)"))
-        .arg(flag("fullname", Some('f'), "print the full name"))
-        .arg(flag("release", Some('r'), "print the release version"))
-        .arg(
-            Arg::new("date")
-                .long("date")
-                .help("date for calculating the version (default: today)"),
-        )
-        .arg(
-            Arg::new("days")
-                .short('y')
-                .long("days")
-                .default_missing_value("release")
-                .num_args(0..=1)
-                .value_parser(["created", "eol", "eol-server", "release"])
-                .value_name("milestone")
-                .help("additionally, display days until milestone"),
-        )
-        .group(ArgGroup::new("selector").args(&selectors).required(true))
-        .group(ArgGroup::new("output").args(&["codename", "fullname", "release"]));
-    for (long, (short, help)) in additional_selectors {
-        command = command.arg(flag(long, short, help));
+        ];
+        selectors.extend(self.additional_selectors.keys());
+        let mut command = Command::new(self.command_name)
+            .version(crate_version!())
+            .author("Daniel Watkins <daniel@daniel-watkins.co.uk>")
+            .arg(flag("all", Some('a'), "list all known versions"))
+            .arg(flag("devel", Some('d'), "latest development version"))
+            .arg(
+                Arg::new("series")
+                    .long("series")
+                    .help("series to calculate the version for"),
+            )
+            .arg(flag("stable", Some('s'), "latest stable version"))
+            .arg(flag(
+                "supported",
+                None,
+                "list of all supported stable versions",
+            ))
+            .arg(flag(
+                "unsupported",
+                None,
+                "list of all unsupported stable versions",
+            ))
+            .arg(flag("codename", Some('c'), "print the codename (default)"))
+            .arg(flag("fullname", Some('f'), "print the full name"))
+            .arg(flag("release", Some('r'), "print the release version"))
+            .arg(
+                Arg::new("date")
+                    .long("date")
+                    .help("date for calculating the version (default: today)"),
+            )
+            .arg(
+                Arg::new("days")
+                    .short('y')
+                    .long("days")
+                    .default_missing_value("release")
+                    .num_args(0..=1)
+                    .value_parser(["created", "eol", "eol-server", "release"])
+                    .value_name("milestone")
+                    .help("additionally, display days until milestone"),
+            )
+            .group(ArgGroup::new("selector").args(&selectors).required(true))
+            .group(ArgGroup::new("output").args(&["codename", "fullname", "release"]));
+        for (long, (short, help)) in self.additional_selectors {
+            command = command.arg(flag(long, short, help));
+        }
+        command
     }
-    command
 }
 
 pub fn common_run(command: Command, distro_info: &impl DistroInfo) -> Result<(), Error> {

@@ -2,13 +2,14 @@ use std::collections::HashMap;
 
 use anyhow::Error;
 use distro_info::{DebianDistroInfo, DistroInfo};
-use distro_info_binaries::{add_common_args, common_run};
+use distro_info_binaries::{common_run, DistroInfoCommand};
 
 fn run() -> Result<(), Error> {
-    let command = add_common_args(
-        "debian-distro-info",
-        HashMap::from([("testing", (Some('t'), "current testing version"))]),
-    );
+    let command = DistroInfoCommand {
+        command_name: "debian-distro-info",
+        additional_selectors: HashMap::from([("testing", (Some('t'), "current testing version"))]),
+    }
+    .create_command();
     let debian_distro_info = DebianDistroInfo::new()?;
     common_run(command, &debian_distro_info)
 }
