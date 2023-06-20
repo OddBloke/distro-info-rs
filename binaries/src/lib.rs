@@ -96,9 +96,23 @@ impl DistroInfoCommand {
         }
         command
     }
+
+    pub fn main(self, run: &dyn Fn(DistroInfoCommand) -> Result<(), Error>) -> () {
+        let command_name = self.command_name;
+        if let Err(ref e) = run(self) {
+            use std::io::Write;
+            let stderr = &mut ::std::io::stderr();
+            writeln!(stderr, "{}: {}", command_name, e).unwrap();
+            ::std::process::exit(1);
+        }
+    }
 }
 
-pub fn common_run(command: Command, distro_info: &impl DistroInfo) -> Result<(), Error> {
+pub fn common_run(
+    distro_info_command: DistroInfoCommand,
+    distro_info: &impl DistroInfo,
+) -> Result<(), Error> {
+    let command = distro_info_command.create_command();
     let matches = command.try_get_matches()?;
     let date = match matches.get_one::<String>("date") {
         Some(date_str) => NaiveDate::parse_from_str(date_str, "%Y-%m-%d").with_context(|| {
