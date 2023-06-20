@@ -301,13 +301,10 @@ pub fn select_distro_releases<'a>(
                 if candidates.is_empty() {
                     bail!("unknown distribution series `{}'", needle_series);
                 };
-                Ok(candidates)
+                candidates
             }
-            None => Err(format_err!(
-                "--series requires an argument; please report a bug about this \
-                 error"
-            )),
-        }?
+            None => bail!("--series requires an argument; please report a bug about this error"),
+        }
     } else {
         panic!("clap prevent us from reaching here; report a bug if you see this")
     })
