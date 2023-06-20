@@ -106,69 +106,68 @@ impl DistroInfoCommand {
             ::std::process::exit(1);
         }
     }
-}
 
-pub fn common_run(
-    distro_info_command: DistroInfoCommand,
-    distro_info: &impl DistroInfo,
-) -> Result<(), Error> {
-    let command = distro_info_command.create_command();
-    let matches = command.try_get_matches()?;
-    let date = match matches.get_one::<String>("date") {
-        Some(date_str) => NaiveDate::parse_from_str(date_str, "%Y-%m-%d").with_context(|| {
-            format!(
-                "Failed to parse date '{}'; must be YYYY-MM-DD format",
-                date_str
-            )
-        })?,
-        None => today(),
-    };
-    let distro_releases_iter = select_distro_releases(&matches, date, distro_info)?;
-    let days_mode = matches
-        .get_one::<String>("days")
-        .map(|value| match value.as_str() {
-            "created" => DaysMode::Created,
-            "eol" => DaysMode::Eol,
-            "eol-server" => DaysMode::EolServer,
-            "release" => DaysMode::Release,
-            _ => panic!("unknown days mode found; please report a bug"),
-        });
-    let distro_name = distro_info.distro().to_string();
-    if matches.get_flag("fullname") {
-        output(
-            distro_name,
-            distro_releases_iter,
-            &OutputMode::FullName,
-            &days_mode,
-            date,
-        )?;
-    } else if matches.get_flag("release") {
-        output(
-            distro_name,
-            distro_releases_iter,
-            &OutputMode::Release,
-            &days_mode,
-            date,
-        )?;
-    } else if matches.get_flag("codename") || days_mode.is_none() {
-        // This should be the default output _unless_ --days is specified
-        output(
-            distro_name,
-            distro_releases_iter,
-            &OutputMode::Codename,
-            &days_mode,
-            date,
-        )?;
-    } else {
-        output(
-            distro_name,
-            distro_releases_iter,
-            &OutputMode::Suppress,
-            &days_mode,
-            date,
-        )?;
+    pub fn run(self, distro_info: &impl DistroInfo) -> Result<(), Error> {
+        let command = self.create_command();
+        let matches = command.try_get_matches()?;
+        let date = match matches.get_one::<String>("date") {
+            Some(date_str) => {
+                NaiveDate::parse_from_str(date_str, "%Y-%m-%d").with_context(|| {
+                    format!(
+                        "Failed to parse date '{}'; must be YYYY-MM-DD format",
+                        date_str
+                    )
+                })?
+            }
+            None => today(),
+        };
+        let distro_releases_iter = select_distro_releases(&matches, date, distro_info)?;
+        let days_mode = matches
+            .get_one::<String>("days")
+            .map(|value| match value.as_str() {
+                "created" => DaysMode::Created,
+                "eol" => DaysMode::Eol,
+                "eol-server" => DaysMode::EolServer,
+                "release" => DaysMode::Release,
+                _ => panic!("unknown days mode found; please report a bug"),
+            });
+        let distro_name = distro_info.distro().to_string();
+        if matches.get_flag("fullname") {
+            output(
+                distro_name,
+                distro_releases_iter,
+                &OutputMode::FullName,
+                &days_mode,
+                date,
+            )?;
+        } else if matches.get_flag("release") {
+            output(
+                distro_name,
+                distro_releases_iter,
+                &OutputMode::Release,
+                &days_mode,
+                date,
+            )?;
+        } else if matches.get_flag("codename") || days_mode.is_none() {
+            // This should be the default output _unless_ --days is specified
+            output(
+                distro_name,
+                distro_releases_iter,
+                &OutputMode::Codename,
+                &days_mode,
+                date,
+            )?;
+        } else {
+            output(
+                distro_name,
+                distro_releases_iter,
+                &OutputMode::Suppress,
+                &days_mode,
+                date,
+            )?;
+        }
+        Ok(())
     }
-    Ok(())
 }
 
 fn determine_day_delta(current_date: NaiveDate, target_date: NaiveDate) -> i64 {
