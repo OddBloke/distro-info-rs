@@ -90,14 +90,14 @@ impl DistroInfoCommand {
                     .help("additionally, display days until milestone"),
             )
             .group(ArgGroup::new("selector").args(&selectors).required(true))
-            .group(ArgGroup::new("output").args(&["codename", "fullname", "release"]));
+            .group(ArgGroup::new("output").args(["codename", "fullname", "release"]));
         for (long, (short, help)) in self.additional_selectors {
             command = command.arg(flag(long, short, help));
         }
         command
     }
 
-    pub fn main(self, run: &dyn Fn(DistroInfoCommand) -> Result<(), Error>) -> () {
+    pub fn main(self, run: &dyn Fn(DistroInfoCommand) -> Result<(), Error>) {
         let command_name = self.command_name;
         if let Err(ref e) = run(self) {
             use std::io::Write;
@@ -181,7 +181,7 @@ pub fn output(
     days_mode: &Option<DaysMode>,
     date: NaiveDate,
 ) -> Result<(), Error> {
-    if distro_releases.len() == 0 {
+    if distro_releases.is_empty() {
         bail!(OUTDATED_MSG);
     }
     for distro_release in distro_releases {
@@ -264,13 +264,13 @@ pub fn select_distro_releases<'a>(
         distro_info.ubuntu_devel(date)
     } else if get_maybe_missing_flag("latest") {
         let devel_result = distro_info.ubuntu_devel(date);
-        if devel_result.len() > 0 {
+        if !devel_result.is_empty() {
             vec![*devel_result.last().unwrap()]
         } else {
             distro_info
                 .latest(date)
                 .map(|distro_release| vec![distro_release])
-                .unwrap_or_else(|| vec![])
+                .unwrap_or_else(Vec::new)
         }
     } else if get_maybe_missing_flag("lts") {
         let mut lts_releases = vec![];
@@ -287,7 +287,7 @@ pub fn select_distro_releases<'a>(
         distro_info
             .latest(date)
             .map(|distro_release| vec![distro_release])
-            .unwrap_or_else(|| vec![])
+            .unwrap_or_else(Vec::new)
     } else if matches.contains_id("series") {
         match matches.get_one::<String>("series") {
             Some(needle_series) => {
