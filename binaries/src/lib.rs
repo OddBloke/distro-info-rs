@@ -15,6 +15,8 @@ Please check for an update for distro-info-data. See /usr/share/doc/distro-info-
 pub enum DaysMode {
     Created,
     Eol,
+    EolLTS,
+    EolELTS,
     EolServer,
     Release,
 }
@@ -24,6 +26,8 @@ impl DaysMode {
         match value {
             "created" => Ok(Self::Created),
             "eol" => Ok(Self::Eol),
+            "eol-lts" => Ok(Self::EolLTS),
+            "eol-elts" => Ok(Self::EolELTS),
             "eol-server" => Ok(Self::EolServer),
             "release" => Ok(Self::Release),
             _ => bail!("unknown days mode found; please report a bug"),
@@ -37,6 +41,8 @@ impl DaysMode {
                 &distro_release.series()
             ))?),
             DaysMode::Eol => *distro_release.eol(),
+            DaysMode::EolLTS => *distro_release.eol_lts(),
+            DaysMode::EolELTS => *distro_release.eol_elts(),
             DaysMode::EolServer => *distro_release.eol_server(),
             DaysMode::Release => Some(distro_release.release().ok_or(format_err!(
                 "No release date found for {}",
