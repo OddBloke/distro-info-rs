@@ -7,14 +7,17 @@ use std::collections::HashMap;
 
 use anyhow::Error;
 use distro_info::{DistroInfo, UbuntuDistroInfo};
-use distro_info_binaries::{add_common_args, common_run};
+use distro_info_binaries::{common_run, DistroInfoCommand};
 
 fn run() -> Result<(), Error> {
-    let additional_selectors = HashMap::from([
-        ("latest", (Some('l'), "")),
-        ("lts", (None, "latest long term support (LTS) version")),
-    ]);
-    let command = add_common_args("ubuntu-distro-info", additional_selectors);
+    let command = DistroInfoCommand {
+        command_name: "ubuntu-distro-info",
+        additional_selectors: HashMap::from([
+            ("latest", (Some('l'), "")),
+            ("lts", (None, "latest long term support (LTS) version")),
+        ]),
+    }
+    .create_command();
     let ubuntu_distro_info = UbuntuDistroInfo::new()?;
     common_run(command, &ubuntu_distro_info)
 }
