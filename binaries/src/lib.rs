@@ -315,16 +315,24 @@ pub fn select_distro_releases<'a>(
                 .map(|distro_release| vec![distro_release])
                 .unwrap_or_else(Vec::new)
         }
-    } else if get_maybe_missing_flag("lts") {
-        let mut lts_releases = vec![];
-        for distro_release in distro_info.all_at(date) {
-            if distro_release.is_lts() {
-                lts_releases.push(distro_release);
-            }
-        }
-        match lts_releases.last() {
-            Some(release) => vec![*release],
-            None => bail!(OUTDATED_MSG),
+    } else if matches.get_flag("lts") {
+        let lts_releases: Vec<_> = distro_info
+            .all_at(date)
+            .into_iter()
+            .filter(|distro_release| match distro_info.distro() {
+                Distro::Ubuntu => distro_release.ubuntu_is_lts(),
+                Distro::Debian => {
+                    !distro_release.supported_at(date, &Milestone::Eol)
+                        && distro_release.supported_at(date, &Milestone::EolLTS)
+                }
+            })
+            .collect();
+        match distro_info.distro() {
+            Distro::Ubuntu => match lts_releases.last() {
+                Some(release) => vec![*release],
+                None => bail!(OUTDATED_MSG),
+            },
+            Distro::Debian => lts_releases,
         }
     } else if get_maybe_missing_flag("elts") {
         distro_info
