@@ -1,3 +1,6 @@
 [submodule "tests/distro-info"]
 	path = tests/distro-info
 	url = https://salsa.debian.org/debian/distro-info
+[submodule "tests/distro-info-data"]
+	path = tests/distro-info-data
+	url = https://salsa.debian.org/debian/distro-info-data
