@@ -12,7 +12,10 @@ fn run(command: DistroInfoCommand) -> Result<(), Error> {
 fn main() {
     let command = DistroInfoCommand {
         command_name: "debian-distro-info",
-        additional_selectors: HashMap::from([("testing", (Some('t'), "current testing version"))]),
+        additional_selectors: HashMap::from([
+            ("oldstable", (Some('o'), "latest oldstable version")),
+            ("testing", (Some('t'), "current testing version")),
+        ]),
     };
     command.main(&run)
 }

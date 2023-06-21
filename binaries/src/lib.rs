@@ -300,6 +300,21 @@ pub fn select_distro_releases<'a>(
             Some(release) => vec![*release],
             None => bail!(OUTDATED_MSG),
         }
+    } else if get_maybe_missing_flag("oldstable") {
+        let candidates = distro_info
+            .released(date)
+            .into_iter()
+            .filter(|distro_release| distro_release.released_at(date))
+            .collect::<Vec<_>>();
+        if candidates.len() > 1 {
+            candidates
+                .get(candidates.len() - 2)
+                .copied()
+                .map(|distro_release| vec![distro_release])
+                .unwrap_or_else(Vec::new)
+        } else {
+            vec![]
+        }
     } else if matches.get_flag("stable") {
         distro_info
             .latest(date)
