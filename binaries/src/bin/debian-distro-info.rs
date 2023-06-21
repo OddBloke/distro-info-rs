@@ -13,8 +13,11 @@ fn main() {
     let command = DistroInfoCommand {
         command_name: "debian-distro-info",
         additional_selectors: HashMap::from([
-            ("oldstable", (Some('o'), "latest oldstable version")),
-            ("testing", (Some('t'), "current testing version")),
+            (
+                "oldstable",
+                (Some('o'), "latest oldstable version", Some("old")),
+            ),
+            ("testing", (Some('t'), "current testing version", None)),
         ]),
     };
     command.main(&run)

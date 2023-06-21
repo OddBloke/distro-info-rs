@@ -59,17 +59,24 @@ pub enum OutputMode {
     Suppress,
 }
 
-pub fn flag(name: &'static str, short: Option<char>, help: &'static str) -> Arg {
+pub fn flag(
+    name: &'static str,
+    short: Option<char>,
+    help: &'static str,
+    alias: Option<&'static str>,
+) -> Arg {
     Arg::new(name)
         .action(ArgAction::SetTrue)
         .short(short)
         .long(name)
         .help(help)
+        .alias(alias)
 }
 
 pub struct DistroInfoCommand {
     pub command_name: &'static str,
-    pub additional_selectors: HashMap<&'static str, (Option<char>, &'static str)>,
+    pub additional_selectors:
+        HashMap<&'static str, (Option<char>, &'static str, Option<&'static str>)>,
 }
 
 impl DistroInfoCommand {
@@ -87,27 +94,39 @@ impl DistroInfoCommand {
         let mut command = Command::new(self.command_name)
             .version(crate_version!())
             .author("Daniel Watkins <daniel@daniel-watkins.co.uk>")
-            .arg(flag("all", Some('a'), "list all known versions"))
-            .arg(flag("devel", Some('d'), "latest development version"))
+            .arg(flag("all", Some('a'), "list all known versions", None))
+            .arg(flag("devel", Some('d'), "latest development version", None))
             .arg(
                 Arg::new("series")
                     .long("series")
                     .help("series to calculate the version for"),
             )
-            .arg(flag("stable", Some('s'), "latest stable version"))
+            .arg(flag("stable", Some('s'), "latest stable version", None))
             .arg(flag(
                 "supported",
                 None,
                 "list of all supported stable versions",
+                None,
             ))
             .arg(flag(
                 "unsupported",
                 None,
                 "list of all unsupported stable versions",
+                None,
             ))
-            .arg(flag("codename", Some('c'), "print the codename (default)"))
-            .arg(flag("fullname", Some('f'), "print the full name"))
-            .arg(flag("release", Some('r'), "print the release version"))
+            .arg(flag(
+                "codename",
+                Some('c'),
+                "print the codename (default)",
+                None,
+            ))
+            .arg(flag("fullname", Some('f'), "print the full name", None))
+            .arg(flag(
+                "release",
+                Some('r'),
+                "print the release version",
+                None,
+            ))
             .arg(
                 Arg::new("date")
                     .long("date")
@@ -125,8 +144,8 @@ impl DistroInfoCommand {
             )
             .group(ArgGroup::new("selector").args(&selectors).required(true))
             .group(ArgGroup::new("output").args(["codename", "fullname", "release"]));
-        for (long, (short, help)) in self.additional_selectors {
-            command = command.arg(flag(long, short, help));
+        for (long, (short, help, alias)) in self.additional_selectors {
+            command = command.arg(flag(long, short, help, alias));
         }
         command
     }
