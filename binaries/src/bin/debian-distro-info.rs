@@ -22,6 +22,10 @@ fn main() {
                 ),
             ),
             (
+                "lts",
+                (Some('l'), "list of all LTS supported versions", None),
+            ),
+            (
                 "oldstable",
                 (Some('o'), "latest oldstable version", Some("old")),
             ),
