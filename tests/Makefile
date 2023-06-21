@@ -15,4 +15,4 @@ run-debian-tests:
 run-ubuntu-tests:
 	COMMAND=$(tests_dir)/../target/debug/ubuntu-distro-info ./distro-info/test-ubuntu-distro-info
 
-test: apply run-ubuntu-tests unapply
+test: apply run-debian-tests run-ubuntu-tests unapply
