@@ -32,6 +32,14 @@ fn parse_date(field: String) -> Result<NaiveDate, Error> {
     Ok(NaiveDate::parse_from_str(field.as_str(), "%Y-%m-%d")?)
 }
 
+pub enum Milestone {
+    Eol,
+    EolELTS,
+    EolESM,
+    EolLTS,
+    EolServer,
+}
+
 #[derive(Default, Clone, Debug)]
 pub struct DistroRelease {
     version: Option<String>,
@@ -132,7 +140,25 @@ impl DistroRelease {
         }
     }
 
-    pub fn supported_at(&self, date: NaiveDate) -> bool {
+    pub fn milestone_date(&self, milestone: &Milestone) -> Option<NaiveDate> {
+        *match milestone {
+            Milestone::Eol => self.eol(),
+            Milestone::EolELTS => self.eol_elts(),
+            Milestone::EolESM => self.eol_esm(),
+            Milestone::EolLTS => self.eol_lts(),
+            Milestone::EolServer => self.eol_server(),
+        }
+    }
+
+    pub fn supported_at(&self, date: NaiveDate, milestone: &Milestone) -> bool {
+        self.created_at(date)
+            && match self.milestone_date(milestone) {
+                Some(eol) => date <= eol,
+                None => true,
+            }
+    }
+
+    pub fn ubuntu_supported_at(&self, date: NaiveDate) -> bool {
         self.created_at(date)
             && match self.eol {
                 Some(eol) => match self.eol_server {
@@ -220,20 +246,38 @@ pub trait DistroInfo: Sized {
     }
 
     /// Returns a vector of `DistroRelease`s for releases that were released and supported at the
-    /// given date
-    fn supported(&self, date: NaiveDate) -> Vec<&DistroRelease> {
+    /// given date, per the given Milestone
+    fn supported(&self, date: NaiveDate, milestone: Milestone) -> Vec<&DistroRelease> {
         self.releases()
             .iter()
-            .filter(|distro_release| distro_release.supported_at(date))
+            .filter(|distro_release| distro_release.supported_at(date, &milestone))
             .collect()
     }
 
     /// Returns a vector of `DistroRelease`s for releases that were released but no longer
-    /// supported at the given date
-    fn unsupported(&self, date: NaiveDate) -> Vec<&DistroRelease> {
+    /// supported at the given date, per the given Milestone
+    fn unsupported(&self, date: NaiveDate, milestone: Milestone) -> Vec<&DistroRelease> {
         self.released(date)
             .into_iter()
-            .filter(|distro_release| !distro_release.supported_at(date))
+            .filter(|distro_release| !distro_release.supported_at(date, &milestone))
+            .collect()
+    }
+
+    /// Returns a vector of `DistroRelease`s for releases that were released and supported at the
+    /// given date, using Ubuntu's rules
+    fn ubuntu_supported(&self, date: NaiveDate) -> Vec<&DistroRelease> {
+        self.releases()
+            .iter()
+            .filter(|distro_release| distro_release.ubuntu_supported_at(date))
+            .collect()
+    }
+
+    /// Returns a vector of `DistroRelease`s for releases that were released but no longer
+    /// supported at the given date, using Ubuntu's rules
+    fn ubuntu_unsupported(&self, date: NaiveDate) -> Vec<&DistroRelease> {
+        self.released(date)
+            .into_iter()
+            .filter(|distro_release| !distro_release.ubuntu_supported_at(date))
             .collect()
     }
 
@@ -268,7 +312,7 @@ pub trait DistroInfo: Sized {
 
     /// Returns a `DistroRelease` for the latest supported, non-EOL release at the given date
     fn latest(&self, date: NaiveDate) -> Option<&DistroRelease> {
-        self.supported(date)
+        self.ubuntu_supported(date)
             .into_iter()
             .filter(|distro_release| distro_release.released_at(date))
             .collect::<Vec<_>>()
@@ -455,7 +499,7 @@ mod tests {
     }
 
     #[test]
-    fn distro_release_supported_at() {
+    fn distro_release_ubuntu_supported_at() {
         let distro_release = DistroRelease::new(
             "98.04 LTS".to_string(),
             "codename".to_string(),
@@ -469,11 +513,11 @@ mod tests {
             None,
         );
         // not supported before release day
-        assert!(!distro_release.supported_at(NaiveDate::from_ymd_opt(2018, 6, 13).unwrap()));
+        assert!(!distro_release.ubuntu_supported_at(NaiveDate::from_ymd_opt(2018, 6, 13).unwrap()));
         // supported on release day
-        assert!(distro_release.supported_at(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()));
+        assert!(distro_release.ubuntu_supported_at(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()));
         // not supported after EOL
-        assert!(!distro_release.supported_at(NaiveDate::from_ymd_opt(2018, 6, 17).unwrap()));
+        assert!(!distro_release.ubuntu_supported_at(NaiveDate::from_ymd_opt(2018, 6, 17).unwrap()));
     }
 
     #[test]
@@ -572,7 +616,7 @@ mod tests {
         // Use bionic's release date to confirm we don't have a boundary issue
         let date = NaiveDate::from_ymd_opt(2018, 4, 26).unwrap();
         let supported_series: Vec<String> = ubuntu_distro_info
-            .supported(date)
+            .ubuntu_supported(date)
             .iter()
             .map(|distro_release| distro_release.series.clone())
             .collect();
@@ -594,7 +638,7 @@ mod tests {
         // Use bionic's release date to confirm we don't have a boundary issue
         let date = NaiveDate::from_ymd_opt(2006, 11, 1).unwrap();
         let unsupported_series: Vec<String> = ubuntu_distro_info
-            .unsupported(date)
+            .ubuntu_unsupported(date)
             .iter()
             .map(|distro_release| distro_release.series.clone())
             .collect();
@@ -610,7 +654,7 @@ mod tests {
         // Use artful's EOL date to confirm we don't have a boundary issue
         let date = NaiveDate::from_ymd_opt(2018, 7, 19).unwrap();
         let supported_series: Vec<String> = ubuntu_distro_info
-            .supported(date)
+            .ubuntu_supported(date)
             .iter()
             .map(|distro_release| distro_release.series.clone())
             .collect();
@@ -631,7 +675,7 @@ mod tests {
         let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
         let date = NaiveDate::from_ymd_opt(2011, 5, 14).unwrap();
         let supported_series: Vec<String> = ubuntu_distro_info
-            .supported(date)
+            .ubuntu_supported(date)
             .iter()
             .map(|distro_release| distro_release.series.clone())
             .collect();
