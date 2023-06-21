@@ -326,6 +326,13 @@ pub fn select_distro_releases<'a>(
             Some(release) => vec![*release],
             None => bail!(OUTDATED_MSG),
         }
+    } else if get_maybe_missing_flag("elts") {
+        distro_info
+            .released(date)
+            .into_iter()
+            .filter(|distro_release| !distro_release.supported_at(date, &Milestone::EolLTS))
+            .filter(|distro_release| distro_release.supported_at(date, &Milestone::EolELTS))
+            .collect::<Vec<_>>()
     } else if get_maybe_missing_flag("oldstable") {
         let candidates = distro_info
             .released(date)
