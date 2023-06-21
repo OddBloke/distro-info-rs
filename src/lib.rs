@@ -32,6 +32,7 @@ fn parse_date(field: String) -> Result<NaiveDate, Error> {
     Ok(NaiveDate::parse_from_str(field.as_str(), "%Y-%m-%d")?)
 }
 
+#[derive(PartialEq)]
 pub enum Milestone {
     Eol,
     EolELTS,
@@ -154,7 +155,8 @@ impl DistroRelease {
         self.created_at(date)
             && match self.milestone_date(milestone) {
                 Some(eol) => date <= eol,
-                None => true,
+                // Missing eol means supported, otherwise unsupported
+                None => milestone == &Milestone::Eol,
             }
     }
 
