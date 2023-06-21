@@ -10,7 +10,7 @@ unapply:
 	cat $(wildcard *.patch) | patch -R -p0
 
 run-debian-tests:
-	COMMAND=$(tests_dir)/../target/debug/debian-distro-info ./distro-info/test-debian-distro-info
+	DISTRO_INFO_CSV=./distro-info-data/debian.csv COMMAND=$(tests_dir)/../target/debug/debian-distro-info ./distro-info/test-debian-distro-info
 
 run-ubuntu-tests:
 	COMMAND=$(tests_dir)/../target/debug/ubuntu-distro-info ./distro-info/test-ubuntu-distro-info
