@@ -18,8 +18,11 @@ fn main() {
     let command = DistroInfoCommand {
         command_name: "ubuntu-distro-info",
         additional_selectors: HashMap::from([
-            ("latest", (Some('l'), "")),
-            ("lts", (None, "latest long term support (LTS) version")),
+            ("latest", (Some('l'), "", None)),
+            (
+                "lts",
+                (None, "latest long term support (LTS) version", None),
+            ),
         ]),
     };
     command.main(&run)
