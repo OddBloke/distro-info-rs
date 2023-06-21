@@ -14,6 +14,14 @@ fn main() {
         command_name: "debian-distro-info",
         additional_selectors: HashMap::from([
             (
+                "elts",
+                (
+                    Some('e'),
+                    "list of all Extended LTS supported versions",
+                    None,
+                ),
+            ),
+            (
                 "oldstable",
                 (Some('o'), "latest oldstable version", Some("old")),
             ),
