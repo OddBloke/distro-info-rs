@@ -119,8 +119,7 @@ impl DistroRelease {
     }
 
     // Non-getters
-    // TODO(jelmer): This should be Ubuntu-specific; it doesn't apply to Debian releases.
-    pub fn is_lts(&self) -> bool {
+    pub fn ubuntu_is_lts(&self) -> bool {
         self.version
             .as_ref()
             .map(|version| version.contains("LTS"))
@@ -448,7 +447,7 @@ mod tests {
     }
 
     #[test]
-    fn distro_release_is_lts() {
+    fn distro_release_ubuntu_is_lts() {
         let distro_release = DistroRelease::new(
             "98.04 LTS".to_string(),
             "codename".to_string(),
@@ -461,7 +460,7 @@ mod tests {
             Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
             Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
         );
-        assert!(distro_release.is_lts());
+        assert!(distro_release.ubuntu_is_lts());
 
         let distro_release = DistroRelease::new(
             "98.04".to_string(),
@@ -475,7 +474,7 @@ mod tests {
             Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
             Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
         );
-        assert!(!distro_release.is_lts());
+        assert!(!distro_release.ubuntu_is_lts());
     }
 
     #[test]
