@@ -6,6 +6,7 @@ use chrono::NaiveDate;
 use chrono::Utc;
 use clap::{crate_version, Arg, ArgAction, ArgGroup, ArgMatches, Command};
 use distro_info::Distro;
+use distro_info::Milestone;
 use distro_info::{DistroInfo, DistroRelease};
 
 pub const OUTDATED_MSG: &str = "Distribution data outdated.
@@ -287,9 +288,15 @@ pub fn select_distro_releases<'a>(
     Ok(if matches.get_flag("all") {
         distro_info.iter().collect()
     } else if matches.get_flag("supported") {
-        distro_info.supported(date)
+        match distro_info.distro() {
+            Distro::Ubuntu => distro_info.ubuntu_supported(date),
+            Distro::Debian => distro_info.supported(date, Milestone::Eol),
+        }
     } else if matches.get_flag("unsupported") {
-        distro_info.unsupported(date)
+        match distro_info.distro() {
+            Distro::Ubuntu => distro_info.ubuntu_unsupported(date),
+            Distro::Debian => distro_info.unsupported(date, Milestone::Eol),
+        }
     } else if matches.get_flag("devel") {
         match distro_info.distro() {
             Distro::Ubuntu => distro_info.ubuntu_devel(date),
