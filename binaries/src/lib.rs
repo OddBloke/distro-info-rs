@@ -178,40 +178,23 @@ impl DistroInfoCommand {
         let distro_releases_iter = select_distro_releases(&matches, date, distro_info)?;
         let days_mode = matches.get_one::<DaysMode>("days");
         let distro_name = distro_info.distro().to_string();
-        if matches.get_flag("fullname") {
-            output(
-                distro_name,
-                distro_releases_iter,
-                &OutputMode::FullName,
-                &days_mode,
-                date,
-            )?;
+        let output_mode = if matches.get_flag("fullname") {
+            OutputMode::FullName
         } else if matches.get_flag("release") {
-            output(
-                distro_name,
-                distro_releases_iter,
-                &OutputMode::Release,
-                &days_mode,
-                date,
-            )?;
+            OutputMode::Release
         } else if matches.get_flag("codename") || days_mode.is_none() {
             // This should be the default output _unless_ --days is specified
-            output(
-                distro_name,
-                distro_releases_iter,
-                &OutputMode::Codename,
-                &days_mode,
-                date,
-            )?;
+            OutputMode::Codename
         } else {
-            output(
-                distro_name,
-                distro_releases_iter,
-                &OutputMode::Suppress,
-                &days_mode,
-                date,
-            )?;
-        }
+            OutputMode::Suppress
+        };
+        output(
+            distro_name,
+            distro_releases_iter,
+            &output_mode,
+            &days_mode,
+            date,
+        )?;
         Ok(())
     }
 }
