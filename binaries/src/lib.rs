@@ -175,7 +175,7 @@ impl DistroInfoCommand {
             }
             None => today(),
         };
-        let distro_releases_iter = select_distro_releases(&matches, date, distro_info)?;
+        let distro_releases = select_distro_releases(&matches, date, distro_info)?;
         let days_mode = matches.get_one::<DaysMode>("days");
         let distro_name = distro_info.distro().to_string();
         let output_mode = if matches.get_flag("fullname") {
@@ -188,13 +188,7 @@ impl DistroInfoCommand {
         } else {
             OutputMode::Suppress
         };
-        output(
-            distro_name,
-            distro_releases_iter,
-            &output_mode,
-            &days_mode,
-            date,
-        )?;
+        output(distro_name, distro_releases, &output_mode, &days_mode, date)?;
         Ok(())
     }
 }
