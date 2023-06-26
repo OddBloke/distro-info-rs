@@ -78,6 +78,7 @@ pub struct DistroInfoCommand {
     pub command_name: &'static str,
     pub additional_selectors:
         HashMap<&'static str, (Option<char>, &'static str, Option<&'static str>)>,
+    pub additional_args: HashMap<&'static str, Arg>,
 }
 
 impl DistroInfoCommand {
@@ -92,6 +93,7 @@ impl DistroInfoCommand {
             "unsupported",
         ];
         selectors.extend(self.additional_selectors.keys());
+        selectors.extend(self.additional_args.keys());
         let mut command = Command::new(self.command_name)
             .version(crate_version!())
             .author("Daniel Watkins <daniel@daniel-watkins.co.uk>")
@@ -148,6 +150,9 @@ impl DistroInfoCommand {
         for (long, (short, help, alias)) in self.additional_selectors {
             command = command.arg(flag(long, short, help, alias));
         }
+        for (_, arg) in self.additional_args {
+            command = command.arg(arg)
+        }
         command
     }
 
@@ -174,6 +179,29 @@ impl DistroInfoCommand {
                 })?
             }
             None => today(),
+        };
+        if let Ok(Some(alias)) = matches.try_get_one::<String>("alias") {
+            if !alias.chars().all(|c| c.is_lowercase()) {
+                bail!("invalid distribution codename: `{}'", alias);
+            };
+            let is_match = |maybe_dr: Option<&DistroRelease>| -> bool {
+                maybe_dr.map(|dr| dr.series() == alias).unwrap_or(false)
+            };
+            println!(
+                "{}",
+                if is_match(distro_info.oldstable(date)) {
+                    "oldstable"
+                } else if is_match(distro_info.latest(date)) {
+                    "stable"
+                } else if is_match(distro_info.ubuntu_devel(date).last().copied()) {
+                    "testing"
+                } else if is_match(distro_info.debian_devel(date).last().copied()) {
+                    "unstable"
+                } else {
+                    alias
+                }
+            );
+            return Ok(());
         };
         let distro_releases = select_distro_releases(&matches, date, distro_info)?;
         let days_mode = matches.get_one::<DaysMode>("days");

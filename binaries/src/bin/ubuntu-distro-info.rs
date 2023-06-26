@@ -24,6 +24,7 @@ fn main() {
                 (None, "latest long term support (LTS) version", None),
             ),
         ]),
+        additional_args: HashMap::new(),
     };
     command.main(&run)
 }
