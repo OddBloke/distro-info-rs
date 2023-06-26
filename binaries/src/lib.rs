@@ -76,9 +76,7 @@ pub fn flag(
 
 pub struct DistroInfoCommand {
     pub command_name: &'static str,
-    pub additional_selectors:
-        HashMap<&'static str, (Option<char>, &'static str, Option<&'static str>)>,
-    pub additional_args: HashMap<&'static str, Arg>,
+    pub additional_selectors: HashMap<&'static str, Arg>,
 }
 
 impl DistroInfoCommand {
@@ -93,7 +91,6 @@ impl DistroInfoCommand {
             "unsupported",
         ];
         selectors.extend(self.additional_selectors.keys());
-        selectors.extend(self.additional_args.keys());
         let mut command = Command::new(self.command_name)
             .version(crate_version!())
             .author("Daniel Watkins <daniel@daniel-watkins.co.uk>")
@@ -147,11 +144,8 @@ impl DistroInfoCommand {
             )
             .group(ArgGroup::new("selector").args(&selectors).required(true))
             .group(ArgGroup::new("output").args(["codename", "fullname", "release"]));
-        for (long, (short, help, alias)) in self.additional_selectors {
-            command = command.arg(flag(long, short, help, alias));
-        }
-        for (_, arg) in self.additional_args {
-            command = command.arg(arg)
+        for (_, arg) in self.additional_selectors {
+            command = command.arg(arg);
         }
         command
     }
