@@ -11,7 +11,7 @@ fn run(command: DistroInfoCommand) -> Result<(), Error> {
 fn main() {
     let command = DistroInfoCommand {
         command_name: "debian-distro-info",
-        additional_selectors: vec![
+        additional_args: vec![
             flag("elts", Some('e'), "list of all Extended LTS supported versions", None),
             flag("lts", Some('l'), "list of all LTS supported versions", None),
             flag("oldstable", Some('o'), "latest oldstable version", Some("old")),

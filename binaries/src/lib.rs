@@ -74,7 +74,7 @@ pub fn flag(
 
 pub struct DistroInfoCommand {
     pub command_name: &'static str,
-    pub additional_selectors: Vec<Arg>,
+    pub additional_args: Vec<Arg>,
 }
 
 impl DistroInfoCommand {
@@ -89,7 +89,7 @@ impl DistroInfoCommand {
             "unsupported".to_string(),
         ];
         selectors.extend(
-            self.additional_selectors
+            self.additional_args
                 .iter()
                 .map(|arg| arg.get_long().unwrap().to_string()),
         );
@@ -146,7 +146,7 @@ impl DistroInfoCommand {
             )
             .group(ArgGroup::new("selector").args(&selectors).required(true))
             .group(ArgGroup::new("output").args(["codename", "fullname", "release"]))
-            .args(self.additional_selectors);
+            .args(self.additional_args);
         command
     }
 
