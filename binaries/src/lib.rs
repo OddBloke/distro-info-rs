@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use anyhow::{bail, format_err, Context, Error};
 use chrono::Datelike;
 use chrono::NaiveDate;
@@ -76,22 +74,26 @@ pub fn flag(
 
 pub struct DistroInfoCommand {
     pub command_name: &'static str,
-    pub additional_selectors: HashMap<&'static str, Arg>,
+    pub additional_selectors: Vec<Arg>,
 }
 
 impl DistroInfoCommand {
     /// Add arguments common to both ubuntu- and debian-distro-info to `app`
     pub fn create_command(self) -> Command {
         let mut selectors = vec![
-            "all",
-            "devel",
-            "series",
-            "stable",
-            "supported",
-            "unsupported",
+            "all".to_string(),
+            "devel".to_string(),
+            "series".to_string(),
+            "stable".to_string(),
+            "supported".to_string(),
+            "unsupported".to_string(),
         ];
-        selectors.extend(self.additional_selectors.keys());
-        let mut command = Command::new(self.command_name)
+        selectors.extend(
+            self.additional_selectors
+                .iter()
+                .map(|arg| arg.get_long().unwrap().to_string()),
+        );
+        let command = Command::new(self.command_name)
             .version(crate_version!())
             .author("Daniel Watkins <daniel@daniel-watkins.co.uk>")
             .arg(flag("all", Some('a'), "list all known versions", None))
@@ -143,10 +145,8 @@ impl DistroInfoCommand {
                     .help("additionally, display days until milestone"),
             )
             .group(ArgGroup::new("selector").args(&selectors).required(true))
-            .group(ArgGroup::new("output").args(["codename", "fullname", "release"]));
-        for (_, arg) in self.additional_selectors {
-            command = command.arg(arg);
-        }
+            .group(ArgGroup::new("output").args(["codename", "fullname", "release"]))
+            .args(self.additional_selectors);
         command
     }
 
