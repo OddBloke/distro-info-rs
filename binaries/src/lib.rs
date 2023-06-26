@@ -324,15 +324,16 @@ pub fn select_distro_releases<'a>(
             .into_iter()
             .filter(|distro_release| distro_release.released_at(date))
             .collect::<Vec<_>>();
-        if candidates.len() > 1 {
-            candidates
-                .get(candidates.len() - 2)
-                .copied()
-                .map(|distro_release| vec![distro_release])
-                .unwrap_or_else(Vec::new)
-        } else {
-            vec![]
-        }
+        let candidate_idx = candidates.len().checked_sub(2);
+        candidate_idx
+            .map(|idx| {
+                candidates
+                    .get(idx)
+                    .copied()
+                    .map(|distro_release| vec![distro_release])
+            })
+            .flatten()
+            .unwrap_or_else(Vec::new)
     } else if matches.get_flag("stable") {
         distro_info
             .latest(date)
