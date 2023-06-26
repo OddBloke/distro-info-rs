@@ -15,7 +15,7 @@ fn run(command: DistroInfoCommand) -> Result<(), Error> {
 fn main() {
     let command = DistroInfoCommand {
         command_name: "ubuntu-distro-info",
-        additional_selectors: vec![
+        additional_args: vec![
             flag("latest", Some('l'), "", None),
             flag("lts", None, "latest long term support (LTS) version", None),
         ],
