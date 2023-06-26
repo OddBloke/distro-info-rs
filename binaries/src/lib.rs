@@ -121,6 +121,14 @@ impl DistroInfoCommand {
             .arg(
                 Arg::new("date")
                     .long("date")
+                    .value_parser(|date_str: &str| {
+                        NaiveDate::parse_from_str(date_str, "%Y-%m-%d").with_context(|| {
+                            format!(
+                                "Failed to parse date '{}'; must be YYYY-MM-DD format",
+                                date_str
+                            )
+                        })
+                    })
                     .help("date for calculating the version (default: today)"),
             )
             .arg(
@@ -152,17 +160,10 @@ impl DistroInfoCommand {
     pub fn run(self, distro_info: &impl DistroInfo) -> Result<(), Error> {
         let command = self.create_command();
         let matches = command.try_get_matches()?;
-        let date = match matches.get_one::<String>("date") {
-            Some(date_str) => {
-                NaiveDate::parse_from_str(date_str, "%Y-%m-%d").with_context(|| {
-                    format!(
-                        "Failed to parse date '{}'; must be YYYY-MM-DD format",
-                        date_str
-                    )
-                })?
-            }
-            None => today(),
-        };
+        let date = matches
+            .get_one::<NaiveDate>("date")
+            .copied()
+            .unwrap_or_else(today);
         if let Ok(Some(alias)) = matches.try_get_one::<String>("alias") {
             if !alias.chars().all(|c| c.is_lowercase()) {
                 bail!("invalid distribution codename: `{}'", alias);
