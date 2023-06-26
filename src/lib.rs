@@ -321,6 +321,19 @@ pub trait DistroInfo: Sized {
             .copied()
     }
 
+    /// Returns a `DistroRelease` for the stable release prior to the current one (if one exists)
+    fn oldstable(&self, date: NaiveDate) -> Option<&DistroRelease> {
+        let candidates = self
+            .released(date)
+            .into_iter()
+            .filter(|distro_release| distro_release.released_at(date))
+            .collect::<Vec<_>>();
+        let candidate_idx = candidates.len().checked_sub(2);
+        candidate_idx
+            .map(|idx| candidates.get(idx).copied())
+            .flatten()
+    }
+
     fn iter(&self) -> ::std::slice::Iter<DistroRelease> {
         self.releases().iter()
     }
