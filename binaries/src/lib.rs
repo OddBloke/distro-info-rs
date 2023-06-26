@@ -319,20 +319,9 @@ pub fn select_distro_releases<'a>(
             .filter(|distro_release| distro_release.supported_at(date, &Milestone::EolELTS))
             .collect::<Vec<_>>()
     } else if get_maybe_missing_flag("oldstable") {
-        let candidates = distro_info
-            .released(date)
-            .into_iter()
-            .filter(|distro_release| distro_release.released_at(date))
-            .collect::<Vec<_>>();
-        let candidate_idx = candidates.len().checked_sub(2);
-        candidate_idx
-            .map(|idx| {
-                candidates
-                    .get(idx)
-                    .copied()
-                    .map(|distro_release| vec![distro_release])
-            })
-            .flatten()
+        distro_info
+            .oldstable(date)
+            .map(|distro_release| vec![distro_release])
             .unwrap_or_else(Vec::new)
     } else if matches.get_flag("stable") {
         distro_info
