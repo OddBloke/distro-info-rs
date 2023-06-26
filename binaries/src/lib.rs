@@ -80,42 +80,31 @@ pub struct DistroInfoCommand {
 impl DistroInfoCommand {
     /// Add arguments common to both ubuntu- and debian-distro-info to `app`
     pub fn create_command(self) -> Command {
-        let mut selectors = vec![
-            "all".to_string(),
-            "devel".to_string(),
-            "series".to_string(),
-            "stable".to_string(),
-            "supported".to_string(),
-            "unsupported".to_string(),
-        ];
-        selectors.extend(
-            self.additional_args
-                .iter()
-                .map(|arg| arg.get_long().unwrap().to_string()),
-        );
-        let command = Command::new(self.command_name)
-            .version(crate_version!())
-            .author("Daniel Watkins <daniel@daniel-watkins.co.uk>")
-            .arg(flag("all", Some('a'), "list all known versions", None))
-            .arg(flag("devel", Some('d'), "latest development version", None))
-            .arg(
-                Arg::new("series")
-                    .long("series")
-                    .help("series to calculate the version for"),
-            )
-            .arg(flag("stable", Some('s'), "latest stable version", None))
-            .arg(flag(
+        let mut args = vec![
+            flag("all", Some('a'), "list all known versions", None),
+            flag("devel", Some('d'), "latest development version", None),
+            Arg::new("series")
+                .long("series")
+                .help("series to calculate the version for"),
+            flag("stable", Some('s'), "latest stable version", None),
+            flag(
                 "supported",
                 None,
                 "list of all supported stable versions",
                 None,
-            ))
-            .arg(flag(
+            ),
+            flag(
                 "unsupported",
                 None,
                 "list of all unsupported stable versions",
                 None,
-            ))
+            ),
+        ];
+        args.extend(self.additional_args);
+        let selectors = args.iter().map(|arg| arg.get_long().unwrap().to_string());
+        let command = Command::new(self.command_name)
+            .version(crate_version!())
+            .author("Daniel Watkins <daniel@daniel-watkins.co.uk>")
             .arg(flag(
                 "codename",
                 Some('c'),
@@ -144,9 +133,9 @@ impl DistroInfoCommand {
                     .value_name("milestone")
                     .help("additionally, display days until milestone"),
             )
-            .group(ArgGroup::new("selector").args(&selectors).required(true))
+            .group(ArgGroup::new("selector").args(selectors).required(true))
             .group(ArgGroup::new("output").args(["codename", "fullname", "release"]))
-            .args(self.additional_args);
+            .args(args);
         command
     }
 
