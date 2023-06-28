@@ -7,10 +7,16 @@ package in Debian/Ubuntu.
 ## Installation
 
 With a working installation of `cargo`, run `cargo install
-ubuntu-distro-info`, then:
+distro-info-binaries`, then:
 
 ```
 ubuntu-distro-info --help
+```
+
+or
+
+```
+debian-distro-info --help
 ```
 
 ## Changelog Generation
