@@ -18,9 +18,3 @@ or
 ```
 debian-distro-info --help
 ```
-
-## Changelog Generation
-
-Note that the clog-cli at https://github.com/OddBloke/clog-cli should
-be used for generating changelogs, pending acceptance of some changes
-upstream.
