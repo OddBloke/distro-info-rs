@@ -354,4 +354,42 @@ mod tests {
         assert_eq!(distro_release.milestone_date(&Milestone::EolESM), None);
         assert_eq!(distro_release.milestone_date(&Milestone::EolServer), None);
     }
+
+    #[test]
+    fn distro_release_test_none_behaviours() {
+        let distro_release = DistroRelease::new(
+            "98.04 LTS".to_string(),
+            "codename".to_string(),
+            "series".to_string(),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        );
+        assert!(!distro_release.created_at(naive_date(2018, 1, 1)));
+        assert!(!distro_release.released_at(naive_date(2018, 1, 1)));
+    }
+
+    #[test]
+    fn distro_release_test_none_behaviours_with_created_date() {
+        let distro_release = DistroRelease::new(
+            "98.04 LTS".to_string(),
+            "codename".to_string(),
+            "series".to_string(),
+            Some(naive_date(2018, 1, 1)),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        );
+        assert!(distro_release.supported_at(naive_date(2018, 1, 1), &Milestone::Eol));
+        assert!(!distro_release.supported_at(naive_date(2018, 1, 1), &Milestone::EolLTS));
+        assert!(!distro_release.supported_at(naive_date(2018, 1, 1), &Milestone::EolLTS));
+        assert!(distro_release.ubuntu_supported_at(naive_date(2018, 1, 1)));
+    }
 }
