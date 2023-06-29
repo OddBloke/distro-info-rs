@@ -134,9 +134,9 @@ impl DistroRelease {
 
 #[cfg(test)]
 mod tests {
-    use chrono::NaiveDate;
-
     use super::DistroRelease;
+
+    use crate::tests::naive_date;
 
     #[test]
     fn create_struct() {
@@ -144,10 +144,10 @@ mod tests {
             version: Some("version".to_string()),
             codename: "codename".to_string(),
             series: "series".to_string(),
-            created: Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
-            release: Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
-            eol: Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
-            eol_server: Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
+            created: Some(naive_date(2018, 6, 14)),
+            release: Some(naive_date(2018, 6, 14)),
+            eol: Some(naive_date(2018, 6, 14)),
+            eol_server: Some(naive_date(2018, 6, 14)),
             ..Default::default()
         };
     }
@@ -155,7 +155,7 @@ mod tests {
     #[test]
     fn distro_release_new() {
         let get_date = |mut n| {
-            let mut date = NaiveDate::from_ymd_opt(2018, 6, 14).unwrap();
+            let mut date = naive_date(2018, 6, 14);
             while n > 0 {
                 date = date.succ_opt().unwrap();
                 n -= 1;
@@ -203,13 +203,13 @@ mod tests {
             "98.04 LTS".to_string(),
             "codename".to_string(),
             "series".to_string(),
-            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
-            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
-            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
-            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
-            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
-            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
-            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
+            Some(naive_date(2018, 6, 14)),
+            Some(naive_date(2018, 6, 14)),
+            Some(naive_date(2018, 6, 14)),
+            Some(naive_date(2018, 6, 14)),
+            Some(naive_date(2018, 6, 14)),
+            Some(naive_date(2018, 6, 14)),
+            Some(naive_date(2018, 6, 14)),
         );
         assert!(distro_release.ubuntu_is_lts());
 
@@ -217,13 +217,13 @@ mod tests {
             "98.04".to_string(),
             "codename".to_string(),
             "series".to_string(),
-            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
-            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
-            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
-            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
-            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
-            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
-            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
+            Some(naive_date(2018, 6, 14)),
+            Some(naive_date(2018, 6, 14)),
+            Some(naive_date(2018, 6, 14)),
+            Some(naive_date(2018, 6, 14)),
+            Some(naive_date(2018, 6, 14)),
+            Some(naive_date(2018, 6, 14)),
+            Some(naive_date(2018, 6, 14)),
         );
         assert!(!distro_release.ubuntu_is_lts());
     }
@@ -234,20 +234,20 @@ mod tests {
             "98.04 LTS".to_string(),
             "codename".to_string(),
             "series".to_string(),
-            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
-            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
-            Some(NaiveDate::from_ymd_opt(2018, 6, 16).unwrap()),
-            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
-            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
-            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
-            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
+            Some(naive_date(2018, 6, 14)),
+            Some(naive_date(2018, 6, 14)),
+            Some(naive_date(2018, 6, 16)),
+            Some(naive_date(2018, 6, 14)),
+            Some(naive_date(2018, 6, 14)),
+            Some(naive_date(2018, 6, 14)),
+            Some(naive_date(2018, 6, 14)),
         );
         // not released before release day
-        assert!(!distro_release.released_at(NaiveDate::from_ymd_opt(2018, 6, 13).unwrap()));
+        assert!(!distro_release.released_at(naive_date(2018, 6, 13)));
         // released on release day
-        assert!(distro_release.released_at(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()));
+        assert!(distro_release.released_at(naive_date(2018, 6, 14)));
         // still released after EOL
-        assert!(distro_release.released_at(NaiveDate::from_ymd_opt(2018, 6, 17).unwrap()));
+        assert!(distro_release.released_at(naive_date(2018, 6, 17)));
     }
 
     #[test]
@@ -256,19 +256,19 @@ mod tests {
             "98.04 LTS".to_string(),
             "codename".to_string(),
             "series".to_string(),
-            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
-            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
-            Some(NaiveDate::from_ymd_opt(2018, 6, 16).unwrap()),
-            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
-            Some(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()),
+            Some(naive_date(2018, 6, 14)),
+            Some(naive_date(2018, 6, 14)),
+            Some(naive_date(2018, 6, 16)),
+            Some(naive_date(2018, 6, 14)),
+            Some(naive_date(2018, 6, 14)),
             None,
             None,
         );
         // not supported before release day
-        assert!(!distro_release.ubuntu_supported_at(NaiveDate::from_ymd_opt(2018, 6, 13).unwrap()));
+        assert!(!distro_release.ubuntu_supported_at(naive_date(2018, 6, 13)));
         // supported on release day
-        assert!(distro_release.ubuntu_supported_at(NaiveDate::from_ymd_opt(2018, 6, 14).unwrap()));
+        assert!(distro_release.ubuntu_supported_at(naive_date(2018, 6, 14)));
         // not supported after EOL
-        assert!(!distro_release.ubuntu_supported_at(NaiveDate::from_ymd_opt(2018, 6, 17).unwrap()));
+        assert!(!distro_release.ubuntu_supported_at(naive_date(2018, 6, 17)));
     }
 }
