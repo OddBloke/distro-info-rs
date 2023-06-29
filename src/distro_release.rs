@@ -251,6 +251,39 @@ mod tests {
     }
 
     #[test]
+    fn distro_release_supported_at() {
+        let distro_release = DistroRelease::new(
+            "98.04 LTS".to_string(),
+            "codename".to_string(),
+            "series".to_string(),
+            Some(naive_date(2018, 6, 14)),
+            Some(naive_date(2018, 6, 14)),
+            Some(naive_date(2018, 6, 16)),
+            Some(naive_date(2018, 6, 17)),
+            Some(naive_date(2018, 6, 18)),
+            Some(naive_date(2018, 6, 19)),
+            Some(naive_date(2018, 6, 20)),
+        );
+        // not supported before release day
+        assert!(!distro_release.supported_at(naive_date(2018, 6, 13), &Milestone::Eol));
+
+        for (milestone, day) in [
+            (&Milestone::Eol, 16),
+            (&Milestone::EolLTS, 17),
+            (&Milestone::EolELTS, 18),
+            (&Milestone::EolESM, 19),
+            (&Milestone::EolServer, 20),
+        ] {
+            // supported on release day
+            assert!(distro_release.supported_at(naive_date(2018, 6, 14), milestone));
+            // supported on milestone end date
+            assert!(distro_release.supported_at(naive_date(2018, 6, day), milestone));
+            // not supported after milestone date
+            assert!(!distro_release.supported_at(naive_date(2018, 6, day + 1), milestone));
+        }
+    }
+
+    #[test]
     fn distro_release_ubuntu_supported_at() {
         let distro_release = DistroRelease::new(
             "98.04 LTS".to_string(),
@@ -262,14 +295,16 @@ mod tests {
             Some(naive_date(2018, 6, 14)),
             Some(naive_date(2018, 6, 14)),
             None,
-            None,
+            Some(naive_date(2018, 6, 18)),
         );
         // not supported before release day
         assert!(!distro_release.ubuntu_supported_at(naive_date(2018, 6, 13)));
         // supported on release day
         assert!(distro_release.ubuntu_supported_at(naive_date(2018, 6, 14)));
+        // supported after EOL, before server EOL
+        assert!(distro_release.ubuntu_supported_at(naive_date(2018, 6, 17)));
         // not supported after EOL
-        assert!(!distro_release.ubuntu_supported_at(naive_date(2018, 6, 17)));
+        assert!(!distro_release.ubuntu_supported_at(naive_date(2018, 6, 19)));
     }
 
     #[test]
