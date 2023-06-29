@@ -48,4 +48,5 @@ jobs:
     - name: "distro-info-rs: Coverage"
       run: |
         cargo +nightly tarpaulin \
-          --exclude-files binaries/\*
+          --exclude-files binaries/\* \
+          --fail-under 64
