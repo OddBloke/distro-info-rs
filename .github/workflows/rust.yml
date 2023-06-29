@@ -41,6 +41,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Install distro-info-data
+      run: |
+        apt-get update -qqy
+        apt-get install -qqy distro-info-data
     - name: "distro-info-rs: Coverage"
       run: |
         cargo +nightly tarpaulin \
