@@ -346,20 +346,12 @@ mod tests {
         let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
         // Use dapper's release date to confirm we don't have a boundary issue
         let date = NaiveDate::from_ymd_opt(2006, 6, 1).unwrap();
-        let released_series: Vec<String> = ubuntu_distro_info
+        let released_series: Vec<_> = ubuntu_distro_info
             .released(date)
             .iter()
-            .map(|distro_release| distro_release.series().clone())
+            .map(|distro_release| distro_release.series())
             .collect();
-        assert_eq!(
-            vec![
-                "warty".to_string(),
-                "hoary".to_string(),
-                "breezy".to_string(),
-                "dapper".to_string(),
-            ],
-            released_series
-        );
+        assert_eq!(vec!["warty", "hoary", "breezy", "dapper"], released_series);
     }
 
     #[test]
@@ -367,19 +359,13 @@ mod tests {
         let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
         // Use bionic's release date to confirm we don't have a boundary issue
         let date = NaiveDate::from_ymd_opt(2018, 4, 26).unwrap();
-        let supported_series: Vec<String> = ubuntu_distro_info
+        let supported_series: Vec<_> = ubuntu_distro_info
             .ubuntu_supported(date)
             .iter()
-            .map(|distro_release| distro_release.series().clone())
+            .map(|distro_release| distro_release.series())
             .collect();
         assert_eq!(
-            vec![
-                "trusty".to_string(),
-                "xenial".to_string(),
-                "artful".to_string(),
-                "bionic".to_string(),
-                "cosmic".to_string(),
-            ],
+            vec!["trusty", "xenial", "artful", "bionic", "cosmic"],
             supported_series
         );
     }
@@ -389,15 +375,12 @@ mod tests {
         let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
         // Use bionic's release date to confirm we don't have a boundary issue
         let date = NaiveDate::from_ymd_opt(2006, 11, 1).unwrap();
-        let unsupported_series: Vec<String> = ubuntu_distro_info
+        let unsupported_series: Vec<_> = ubuntu_distro_info
             .ubuntu_unsupported(date)
             .iter()
-            .map(|distro_release| distro_release.series().clone())
+            .map(|distro_release| distro_release.series())
             .collect();
-        assert_eq!(
-            vec!["warty".to_string(), "hoary".to_string()],
-            unsupported_series
-        );
+        assert_eq!(vec!["warty", "hoary"], unsupported_series);
     }
 
     #[test]
@@ -405,19 +388,13 @@ mod tests {
         let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
         // Use artful's EOL date to confirm we don't have a boundary issue
         let date = NaiveDate::from_ymd_opt(2018, 7, 19).unwrap();
-        let supported_series: Vec<String> = ubuntu_distro_info
+        let supported_series: Vec<_> = ubuntu_distro_info
             .ubuntu_supported(date)
             .iter()
-            .map(|distro_release| distro_release.series().clone())
+            .map(|distro_release| distro_release.series())
             .collect();
         assert_eq!(
-            vec![
-                "trusty".to_string(),
-                "xenial".to_string(),
-                "artful".to_string(),
-                "bionic".to_string(),
-                "cosmic".to_string(),
-            ],
+            vec!["trusty", "xenial", "artful", "bionic", "cosmic"],
             supported_series
         );
     }
@@ -426,51 +403,44 @@ mod tests {
     fn ubuntu_distro_info_supported_with_server_eol() {
         let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
         let date = NaiveDate::from_ymd_opt(2011, 5, 14).unwrap();
-        let supported_series: Vec<String> = ubuntu_distro_info
+        let supported_series: Vec<_> = ubuntu_distro_info
             .ubuntu_supported(date)
             .iter()
-            .map(|distro_release| distro_release.series().clone())
+            .map(|distro_release| distro_release.series())
             .collect();
-        assert!(supported_series.contains(&"dapper".to_string()));
+        assert!(supported_series.contains(&&"dapper".to_string()));
     }
 
     #[test]
     fn ubuntu_distro_info_devel() {
         let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
         let date = NaiveDate::from_ymd_opt(2018, 4, 26).unwrap();
-        let devel_series: Vec<String> = ubuntu_distro_info
+        let devel_series: Vec<_> = ubuntu_distro_info
             .ubuntu_devel(date)
             .iter()
-            .map(|distro_release| distro_release.series().clone())
+            .map(|distro_release| distro_release.series())
             .collect();
-        assert_eq!(vec!["cosmic".to_string()], devel_series);
+        assert_eq!(vec!["cosmic"], devel_series);
     }
 
     #[test]
     fn ubuntu_distro_info_all_at() {
         let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
         let date = NaiveDate::from_ymd_opt(2005, 4, 8).unwrap();
-        let all_series: Vec<String> = ubuntu_distro_info
+        let all_series: Vec<_> = ubuntu_distro_info
             .all_at(date)
             .iter()
-            .map(|distro_release| distro_release.series().clone())
+            .map(|distro_release| distro_release.series())
             .collect();
-        assert_eq!(
-            vec![
-                "warty".to_string(),
-                "hoary".to_string(),
-                "breezy".to_string(),
-            ],
-            all_series
-        );
+        assert_eq!(vec!["warty", "hoary", "breezy"], all_series);
     }
 
     #[test]
     fn ubuntu_distro_info_latest() {
         let ubuntu_distro_info = UbuntuDistroInfo::new().unwrap();
         let date = NaiveDate::from_ymd_opt(2005, 4, 8).unwrap();
-        let latest_series = ubuntu_distro_info.latest(date).unwrap().series().clone();
-        assert_eq!("hoary".to_string(), latest_series);
+        let latest_series = ubuntu_distro_info.latest(date).unwrap().series();
+        assert_eq!("hoary", latest_series);
     }
 
     #[test]
