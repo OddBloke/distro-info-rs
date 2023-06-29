@@ -35,10 +35,14 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    container:
+      image: xd009642/tarpaulin:develop-nightly
+      options: --security-opt seccomp=unconfined
+
     steps:
     - uses: actions/checkout@v3
-    - name: "tarpaulin: Install"
-      run: cargo install cargo-tarpaulin
     - name: "distro-info-rs: Coverage"
       run: |
-        cargo tarpaulin --exclude-files binaries/\*
+        cargo +nightly tarpaulin \
+          --verbose \
+          --exclude-files binaries/\*
