@@ -30,3 +30,15 @@ jobs:
       run: cd binaries && cargo test --verbose
     - name: "binaries: Upstream tests"
       run: cd tests && make ci-install-deps && make test
+
+  coverage:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: "tarpaulin: Install"
+      run: cargo install cargo-tarpaulin
+    - name: "distro-info-rs: Coverage"
+      run: |
+        cargo tarpaulin --exclude-files binaries/\*
