@@ -49,7 +49,7 @@ jobs:
       run: |
         cargo +nightly tarpaulin \
           --exclude-files binaries/\* \
-          --fail-under 64 \
+          --fail-under 73 \
           --out html
     - name: upload coverage HTML
       uses: actions/upload-artifact@v2
