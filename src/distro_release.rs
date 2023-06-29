@@ -136,7 +136,7 @@ impl DistroRelease {
 mod tests {
     use super::DistroRelease;
 
-    use crate::tests::naive_date;
+    use crate::{tests::naive_date, Milestone};
 
     #[test]
     fn create_struct() {
@@ -270,5 +270,53 @@ mod tests {
         assert!(distro_release.ubuntu_supported_at(naive_date(2018, 6, 14)));
         // not supported after EOL
         assert!(!distro_release.ubuntu_supported_at(naive_date(2018, 6, 17)));
+    }
+
+    #[test]
+    fn distro_release_milestone_date() {
+        let distro_release = DistroRelease::new(
+            "98.04 LTS".to_string(),
+            "codename".to_string(),
+            "series".to_string(),
+            Some(naive_date(2018, 6, 14)),
+            Some(naive_date(2018, 6, 15)),
+            Some(naive_date(2018, 6, 16)),
+            Some(naive_date(2018, 6, 17)),
+            Some(naive_date(2018, 6, 18)),
+            Some(naive_date(2018, 6, 19)),
+            Some(naive_date(2018, 6, 20)),
+        );
+        let assert = |milestone: Milestone, day: u32| {
+            assert_eq!(
+                distro_release.milestone_date(&milestone),
+                Some(naive_date(2018, 6, day))
+            )
+        };
+        assert(Milestone::Eol, 16);
+        assert(Milestone::EolLTS, 17);
+        assert(Milestone::EolELTS, 18);
+        assert(Milestone::EolESM, 19);
+        assert(Milestone::EolServer, 20);
+    }
+
+    #[test]
+    fn distro_release_milestone_date_none() {
+        let distro_release = DistroRelease::new(
+            "98.04 LTS".to_string(),
+            "codename".to_string(),
+            "series".to_string(),
+            Some(naive_date(2018, 6, 14)),
+            Some(naive_date(2018, 6, 15)),
+            None,
+            None,
+            None,
+            None,
+            None,
+        );
+        assert_eq!(distro_release.milestone_date(&Milestone::Eol), None);
+        assert_eq!(distro_release.milestone_date(&Milestone::EolLTS), None);
+        assert_eq!(distro_release.milestone_date(&Milestone::EolELTS), None);
+        assert_eq!(distro_release.milestone_date(&Milestone::EolESM), None);
+        assert_eq!(distro_release.milestone_date(&Milestone::EolServer), None);
     }
 }
