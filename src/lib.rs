@@ -203,9 +203,7 @@ pub trait DistroInfo: Sized {
             .filter(|distro_release| distro_release.released_at(date))
             .collect::<Vec<_>>();
         let candidate_idx = candidates.len().checked_sub(2);
-        candidate_idx
-            .map(|idx| candidates.get(idx).copied())
-            .flatten()
+        candidate_idx.and_then(|idx| candidates.get(idx).copied())
     }
 
     fn iter(&self) -> ::std::slice::Iter<DistroRelease> {
@@ -242,6 +240,43 @@ impl IntoIterator for UbuntuDistroInfo {
 
 pub struct DebianDistroInfo {
     releases: Vec<DistroRelease>,
+}
+
+impl DebianDistroInfo {
+    pub fn stable(&self, date: NaiveDate) -> Option<&DistroRelease> {
+        self.released(date).into_iter().rev().next()
+    }
+
+    pub fn oldstable(&self, date: NaiveDate) -> Option<&DistroRelease> {
+        self.released(date).into_iter().rev().nth(1)
+    }
+
+    pub fn testing(&self, date: NaiveDate) -> Option<&DistroRelease> {
+        self.iter().find(|release| {
+            if let Some(created) = release.created() {
+                date > *created
+                    && (release.release().is_none() || date < release.release().unwrap())
+                    && release.series() != "sid"
+                    && release.series() != "experimental"
+            } else {
+                false
+            }
+        })
+    }
+
+    pub fn unstable(&self) -> &DistroRelease {
+        self.releases()
+            .iter()
+            .find(|release| release.series() == "sid")
+            .unwrap()
+    }
+
+    pub fn experimental(&self) -> &DistroRelease {
+        self.releases()
+            .iter()
+            .find(|release| release.series() == "experimental")
+            .unwrap()
+    }
 }
 
 impl DistroInfo for DebianDistroInfo {
@@ -449,5 +484,42 @@ mod tests {
             iter1.next().unwrap().series(),
             iter2.next().unwrap().series()
         );
+    }
+
+    #[test]
+    fn debian_stable() {
+        let debian_distro_info = DebianDistroInfo::new().unwrap();
+        let stable = debian_distro_info.stable(naive_date(2018, 4, 26)).unwrap();
+        assert_eq!(stable.series(), "stretch");
+    }
+
+    #[test]
+    fn debian_oldstable() {
+        let debian_distro_info = DebianDistroInfo::new().unwrap();
+        let oldstable = debian_distro_info
+            .oldstable(naive_date(2018, 4, 26))
+            .unwrap();
+        assert_eq!(oldstable.series(), "jessie");
+    }
+
+    #[test]
+    fn debian_testing() {
+        let debian_distro_info = DebianDistroInfo::new().unwrap();
+        let testing = debian_distro_info.testing(naive_date(2021, 7, 26)).unwrap();
+        assert_eq!(testing.series(), "bullseye");
+    }
+
+    #[test]
+    fn debian_unstable() {
+        let debian_distro_info = DebianDistroInfo::new().unwrap();
+        let unstable = debian_distro_info.unstable();
+        assert_eq!(unstable.series(), "sid");
+    }
+
+    #[test]
+    fn debian_experimental() {
+        let debian_distro_info = DebianDistroInfo::new().unwrap();
+        let experimental = debian_distro_info.experimental();
+        assert_eq!(experimental.series(), "experimental");
     }
 }
